@@ -60,6 +60,7 @@ FEATURES: tuple[FeatureStatus, ...] = (
     _f("perks.ranks", "perks", "Perk ranks", "partial", "ADVANCED", ["CLI", "GUI", "MODEL"], "Rank data only."),
     _f("kills.counts", "kills", "Kill counters", "implemented", "SAFE", ["CLI", "GUI", "MODEL"], "Counter fields."),
     _f("inventory.existing", "inventory", "Existing inventory values", "implemented", "SAFE", ["CLI", "GUI", "MODEL"], "Existing fixed-width fields."),
+    _f("inventory.quantity_workflow", "inventory", "Existing item quantity workflow", "implemented", "SAFE", ["CLI", "MODEL", "DOCS"], "Guided dry-run/write workflow for existing item quantity only."),
     _f("inventory.structure", "inventory", "Inventory structure operations", "planned", "N/A", ["DOCS"], "Needs more fixtures.", "none"),
     _f("items.metadata", "item metadata", "Item metadata", "read-only", "READ_ONLY", ["CLI", "GUI", "MODEL", "DOCS"], "Display and confidence data."),
     _f("raw.access", "raw read/write", "Raw access", "implemented", "RAW", ["CLI", "GUI", "MODEL"], "Explicit raw workflow."),
@@ -83,7 +84,6 @@ FEATURES: tuple[FeatureStatus, ...] = (
 )
 
 RECOMMENDED_NEXT_MILESTONES = [
-    "v0.12.0 - real fixture corpus expansion and guided import workflow",
     "v0.13.0 - safer existing-inventory UX and item quantity workflows",
     "v0.14.0 - read-only quest/global naming groundwork",
     "v0.15.0 - map object deep scan",
