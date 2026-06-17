@@ -28,6 +28,41 @@ def _load_save(slot_path: str | Path) -> SaveDat:
     return SaveSlot.open(slot_path).save_dat
 
 
+def _inventory_payload(slot: SaveSlot) -> dict:
+    return {
+        "slot_path": str(slot.path),
+        "inventory_count": slot.save_dat.player_object.inventory_count,
+        "inventory": [item.to_dict() for item in slot.save_dat.player_object.inventory],
+    }
+
+
+def _fixture_snapshot(slot: SaveSlot, *, name: str | None, description: str, include_sha256: bool, include_warnings: bool) -> dict:
+    sd = slot.save_dat
+    h = sd.header
+    entry = {
+        "description": description,
+        "save_dat_size": len(sd.data),
+        "version": h.version,
+        "player_name": h.player_name,
+        "current_map_file": h.current_map_file,
+        "function5_start": f"0x{sd.player_object.start:X}",
+        "function6_start": f"0x{sd.critter_stats.start:X}",
+        "inventory_count": sd.player_object.inventory_count,
+        "kill_count_count": sd.kill_count_count,
+        "expected_artifacts": [artifact.name for artifact in slot.artifacts],
+    }
+    if include_sha256:
+        entry["sha256"] = sd.sha256
+    warnings = list(dict.fromkeys(sd.warnings))
+    if include_warnings and warnings:
+        entry["warnings"] = warnings
+    issues = sd.verify()
+    if issues:
+        entry["verify_issues"] = issues
+    slot_name = name or slot.path.name
+    return {slot_name: entry}
+
+
 def cmd_inspect(args: argparse.Namespace) -> int:
     slot = SaveSlot.open(args.slot)
     sd = slot.save_dat
@@ -48,7 +83,11 @@ def cmd_inspect(args: argparse.Namespace) -> int:
         print(f"  {name:12s} 0x{f.abs_offset:X} = {f.value}")
     print("Inventory:")
     for item in sd.player_object.inventory:
-        print(f"  #{item.index}: 0x{item.start:X} qty={item.quantity} pid={item.pid} type={item.type_name} name={item.object_name} size=0x{item.size:X}")
+        print(
+            f"  #{item.index}: 0x{item.start:X} qty={item.quantity} pid={item.pid} "
+            f"known={item.known_pid} type={item.type_name} name={item.object_name} "
+            f"size=0x{item.size:X} source={item.size_source} confidence={item.confidence}"
+        )
     if slot.artifacts:
         print("Slot artifacts:")
         for art in slot.artifacts:
@@ -66,6 +105,41 @@ def cmd_dump(args: argparse.Namespace) -> int:
         print(json.dumps(slot.to_dict(), indent=2, sort_keys=True))
     else:
         return cmd_inspect(args)
+    return 0
+
+
+def cmd_inventory(args: argparse.Namespace) -> int:
+    slot = SaveSlot.open(args.slot)
+    payload = _inventory_payload(slot)
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 0
+    for item in payload["inventory"]:
+        print(
+            f"#{item['index']:>2} 0x{item['start']:X} "
+            f"qty={item['quantity']} pid={item['pid']} known={item['known_pid']} "
+            f"type={item['type']} name={item['name']} size=0x{item['size']:X} "
+            f"source={item['size_source']} confidence={item['confidence']} "
+            f"ammo={item['ammo_or_charges']} ammo_type={item['ammo_type']}"
+        )
+        for warning in item["warnings"]:
+            print(f"    warning: {warning}")
+    return 0
+
+
+def cmd_fixture_snapshot(args: argparse.Namespace) -> int:
+    slot = SaveSlot.open(args.slot)
+    payload = _fixture_snapshot(
+        slot,
+        name=args.name,
+        description=args.description,
+        include_sha256=args.include_sha256,
+        include_warnings=args.include_warnings,
+    )
+    print(json.dumps(payload, indent=2, sort_keys=True))
+    entry = next(iter(payload.values()))
+    if entry.get("verify_issues") and not args.allow_invalid:
+        return 1
     return 0
 
 
@@ -169,7 +243,6 @@ def cmd_raw_write(args: argparse.Namespace) -> int:
     return 0
 
 
-
 def cmd_gui(args: argparse.Namespace) -> int:
     # Import Tk only when the GUI command is executed. This follows Python 3
     # stdlib guidance and keeps ordinary CLI/test paths display-independent.
@@ -209,6 +282,7 @@ def cmd_effective(args: argparse.Namespace) -> int:
         print(f"  {stat:12s} base={row['base']:>3} bonus={row['bonus']:>3} trait={row['static_trait']:>3} => {row['effective_static']:>3}")
     return 0
 
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="f1se", description="Fallout 1 save editor, round-trip-safe by default")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -221,6 +295,21 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("slot")
     q.add_argument("--json", action="store_true")
     q.set_defaults(func=cmd_dump)
+
+    q = sub.add_parser("inventory", help="show read-only inventory/proto metadata")
+    q.add_argument("slot")
+    q.add_argument("--json", action="store_true")
+    q.set_defaults(func=cmd_inventory)
+
+    q = sub.add_parser("fixture-snapshot", help="emit a fixtures.json entry for a real save slot")
+    q.add_argument("slot")
+    q.add_argument("--name", help="manifest key to use; defaults to the slot directory name")
+    q.add_argument("--description", default="Real Fallout 1 save fixture")
+    q.add_argument("--json", action="store_true", help="accepted for explicitness; output is JSON")
+    q.add_argument("--include-sha256", action="store_true")
+    q.add_argument("--include-warnings", action="store_true")
+    q.add_argument("--allow-invalid", action="store_true", help="return zero even if verify issues are included in the output")
+    q.set_defaults(func=cmd_fixture_snapshot)
 
     q = sub.add_parser("fields")
     q.add_argument("slot")
