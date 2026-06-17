@@ -14,6 +14,9 @@
       "AUTOMAP.SAV": "AUTOMAP_SAV",
       "V13ENT.SAV": "MAP_SAV"
     },
+    "expected_map_artifacts": {
+      "V13ENT.SAV": {"kind": "MAP_SAV", "parser_status": "raw-fingerprint", "min_size": 1}
+    },
     "expected_raw_blocks": {
       "2": {"name": "scripts_game_save_1", "start": "0x7567", "end": "0x7BDE"},
       "3": {"name": "maps", "start": "0x7BDE", "end": "0x8255"},
