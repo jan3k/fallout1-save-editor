@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 from typing import Any, Iterable
 
+from f1se.format.global_state import discover_global_state_candidates
+from f1se.format.raw_inspection import inspect_raw_blocks
 from f1se.format.slot import SaveSlot
 from f1se.format.save_dat import SaveDat
 from f1se.io.atomic_write import atomic_write_bytes
@@ -46,6 +48,20 @@ def _artifacts_payload(slot: SaveSlot) -> dict:
     return {
         "slot_path": str(slot.path),
         "artifacts": [artifact.to_dict() for artifact in slot.artifacts],
+    }
+
+
+def _raw_blocks_payload(slot: SaveSlot) -> dict:
+    return {
+        "slot_path": str(slot.path),
+        "raw_blocks": [item.to_dict() for item in inspect_raw_blocks(slot.save_dat.data, slot.save_dat.blocks)],
+    }
+
+
+def _globals_scan_payload(slot: SaveSlot) -> dict:
+    return {
+        "slot_path": str(slot.path),
+        "candidates": [item.to_dict() for item in discover_global_state_candidates(slot.save_dat.data, slot.save_dat.blocks)],
     }
 
 
@@ -124,6 +140,18 @@ def _check_fixture(root: Path, slot_name: str, expected: dict[str, Any]) -> dict
         actual_kinds = {artifact.name: artifact.kind for artifact in slot.artifacts}
         if actual_kinds != expected_kinds:
             issues.append(f"expected_artifact_kinds mismatch: {actual_kinds!r} != {expected_kinds!r}")
+    for index, row in expected.get("expected_raw_blocks", {}).items():
+        idx = int(index)
+        if idx >= len(sd.blocks):
+            issues.append(f"expected_raw_blocks index {idx} missing")
+            continue
+        block = sd.blocks[idx]
+        if block.name != row["name"]:
+            issues.append(f"raw block {idx} name mismatch: {block.name!r} != {row['name']!r}")
+        if block.start != _hex_or_int(row["start"]):
+            issues.append(f"raw block {idx} start mismatch: 0x{block.start:X} != {row['start']}")
+        if block.end != _hex_or_int(row["end"]):
+            issues.append(f"raw block {idx} end mismatch: 0x{block.end:X} != {row['end']}")
     for row in expected.get("expected_inventory", []):
         idx = int(row["index"])
         if idx >= len(sd.player_object.inventory):
@@ -247,6 +275,39 @@ def cmd_artifacts(args: argparse.Namespace) -> int:
         )
         for warning in artifact["warnings"]:
             print(f"  warning: {warning}")
+    return 0
+
+
+def cmd_raw_blocks(args: argparse.Namespace) -> int:
+    slot = SaveSlot.open(args.slot)
+    payload = _raw_blocks_payload(slot)
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 0
+    for block in payload["raw_blocks"]:
+        print(
+            f"#{block['index']:>2} {block['name']}: 0x{block['start']:X}..0x{block['end']:X} "
+            f"size=0x{block['size']:X} status={block['parser_status']} "
+            f"entropy={block['entropy_hint']} zero={block['zero_ratio']:.3f} "
+            f"plausible_i32={block['plausible_i32_count']}/{block['i32_count']}"
+        )
+    return 0
+
+
+def cmd_globals_scan(args: argparse.Namespace) -> int:
+    slot = SaveSlot.open(args.slot)
+    payload = _globals_scan_payload(slot)
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 0
+    for candidate in payload["candidates"]:
+        print(
+            f"#{candidate['block_index']:>2} {candidate['block_name']}: "
+            f"0x{candidate['start']:X}..0x{candidate['end']:X} "
+            f"i32={candidate['i32_count']} nonzero={candidate['nonzero_i32_count']} "
+            f"min={candidate['min_i32']} max={candidate['max_i32']} "
+            f"confidence={candidate['confidence']} notes={candidate['notes']}"
+        )
     return 0
 
 
@@ -444,6 +505,16 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("slot")
     q.add_argument("--json", action="store_true")
     q.set_defaults(func=cmd_artifacts)
+
+    q = sub.add_parser("raw-blocks", help="inspect preserved raw SAVE.DAT blocks")
+    q.add_argument("slot")
+    q.add_argument("--json", action="store_true")
+    q.set_defaults(func=cmd_raw_blocks)
+
+    q = sub.add_parser("globals-scan", help="read-only global/script state discovery")
+    q.add_argument("slot")
+    q.add_argument("--json", action="store_true")
+    q.set_defaults(func=cmd_globals_scan)
 
     q = sub.add_parser("fixture-snapshot", help="emit a fixtures.json entry for a real save slot")
     q.add_argument("slot")
