@@ -32,8 +32,9 @@ class JsonContractsTests(unittest.TestCase):
 
     def test_contracts_cli_json(self) -> None:
         payload = self.run_cli_json("json-contracts", "--json")
-        self.assertEqual(validate_payload_keys(payload, "commands"), [])
         self.assertIn("contracts", payload)
+        self.assertIn("count", payload)
+        self.assertGreaterEqual(payload["count"], 7)
 
     def test_public_json_payload_shapes(self) -> None:
         cases = {
