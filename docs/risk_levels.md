@@ -2,7 +2,7 @@
 
 Risk levels describe write safety. They are independent from parser visibility: a field can be visible in the UI and still remain `ADVANCED`, `EXPERIMENTAL` or raw-preserved.
 
-Read-only metadata, such as known item/proto names, inventory parser confidence and slot artifact fingerprints, does not change a field or file's write safety.
+Read-only metadata, such as known item/proto names, inventory parser confidence, slot artifact fingerprints, raw block discovery and GUI diagnostic payloads, does not change a field or file's write safety.
 
 ## SAFE
 
@@ -32,7 +32,7 @@ Fixed-width fields that can have engine-side consequences or derived-stat mismat
 - partial options fields,
 - fields whose normal game workflow would trigger extra recalculation.
 
-These fields can be edited, but users should treat them as lower-level save data rather than as fully emulated game actions.
+These fields can be edited, but users should treat them as lower-level save data rather than as fully emulated game actions. The GUI requires an additional acknowledgement before writing patches that include `ADVANCED` fields.
 
 ## EXPERIMENTAL
 
@@ -42,6 +42,7 @@ Operations that can alter structure length or object identity:
 - changing PID/FID/type,
 - changing object scripts/local vars,
 - changing queue entries,
+- semantic global/quest/script editing,
 - semantic worldmap/party/map-object editing,
 - `.SAV`/`AUTOMAP.SAV` rebuild or semantic write.
 
