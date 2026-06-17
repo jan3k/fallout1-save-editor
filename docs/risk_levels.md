@@ -1,5 +1,7 @@
 # Risk levels
 
+Risk levels describe write safety. They are independent from parser visibility: a field can be visible in the UI and still remain `ADVANCED`, `EXPERIMENTAL` or raw-preserved.
+
 ## SAFE
 
 Fixed-width fields with local byte edits and conservative validation:
@@ -11,8 +13,11 @@ Fixed-width fields with local byte edits and conservative validation:
 - tag skill ids,
 - trait ids,
 - PC skill points, level, XP, reputation, karma,
+- kill counters,
 - inventory quantity for existing items,
 - known ammo/charges values for existing entries.
+
+A `SAFE` edit must be covered by tests showing the changed byte range is local and fixed-width.
 
 ## ADVANCED
 
@@ -25,6 +30,8 @@ Fixed-width fields that can have engine-side consequences or derived-stat mismat
 - partial options fields,
 - fields whose normal game workflow would trigger extra recalculation.
 
+These fields can be edited, but users should treat them as lower-level save data rather than as fully emulated game actions.
+
 ## EXPERIMENTAL
 
 Operations that can alter structure length or object identity:
@@ -35,7 +42,7 @@ Operations that can alter structure length or object identity:
 - changing queue entries,
 - semantic worldmap/party/map-object editing.
 
-Not implemented as high-level operations in v0.1.
+High-level `EXPERIMENTAL` operations are intentionally not implemented until there are enough real fixtures and source-aligned parser tests to protect round-trip behaviour.
 
 ## RAW
 
@@ -44,3 +51,9 @@ Unknown bytes. The tool can read them and can write them only through:
 ```bash
 f1se raw-write SLOT SAVE.DAT:0xOFFSET:HEX --experimental --write
 ```
+
+Raw writes bypass semantic field validators. They must remain explicit and must not be hidden behind friendly high-level APIs.
+
+## Fixture rule
+
+Every new writable field should be checked against at least one real save fixture. The no-change parse invariant is stronger than semantic coverage: unknown bytes must remain byte-identical even when the editor does not understand them.
