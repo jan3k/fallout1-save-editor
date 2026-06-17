@@ -1,6 +1,8 @@
 """Fallout 1 constants and display names."""
 from __future__ import annotations
 
+from f1se.schema.items import ITEM_PID_NAMES, ITEM_TYPE_SIZES
+
 PRIMARY_STAT_MIN = 1
 PRIMARY_STAT_MAX = 10
 PRIMARY_STAT_COUNT = 7
@@ -129,27 +131,6 @@ PERK_NAMES = [
     "powered_armor",
     "combat_armor",
 ]
-
-ITEM_PID_NAMES = {
-    4: ("Knife", "weapon", 0x64),
-    8: ("10mm Pistol", "weapon", 0x64),
-    29: ("10mm JHP", "ammo", 0x60),
-    30: ("10mm AP", "ammo", 0x60),
-    40: ("Stimpak", "drug", 0x5C),
-    79: ("Flare", "weapon", 0x64),
-}
-
-ITEM_TYPE_SIZES = {
-    "weapon": 0x64,
-    "ammo": 0x60,
-    "armor": 0x5C,
-    "drug": 0x5C,
-    "misc": 0x60,
-    "key": 0x5C,
-    "container": 0x5C,
-    "unknown": 0x5C,
-}
-
 
 # Fallout 1 kill-count block in SAVE.DAT Function 7.  The engine source stores
 # an array of kill counters; the exact user-facing labels are data/message driven,
