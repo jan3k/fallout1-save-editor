@@ -27,8 +27,13 @@ class JsonPayloadContract:
 CONTRACTS: tuple[JsonPayloadContract, ...] = (
     JsonPayloadContract("features", "features --json", ("features",), ("counts_by_status", "counts_by_risk", "recommended_next_milestones"), True, "Feature matrix payload."),
     JsonPayloadContract("commands", "commands --json", ("commands", "count"), (), True, "Public CLI index payload."),
+    JsonPayloadContract("json_contracts", "json-contracts --json", ("contracts", "count"), (), True, "JSON contract catalog."),
+    JsonPayloadContract("release_audit", "release-audit --json", ("status", "checks", "summary", "read_only"), (), True, "Release audit payload."),
+    JsonPayloadContract("smoke", "smoke --json", ("ok", "checks", "commands_count", "contracts_count", "audit_status", "read_only"), (), True, "Smoke payload."),
     JsonPayloadContract("inventory_editable", "inventory-editable SLOT --json", ("slot_path", "inventory_count", "items", "blocked_operations", "quantity_range"), (), True, "Existing inventory workflow view."),
     JsonPayloadContract("map_summary", "map-summary SLOT --json", ("slot_path", "maps"), (), True, "Read-only map artifact summary."),
+    JsonPayloadContract("save_diff", "diff LEFT RIGHT --json", ("left_slot", "right_slot", "field_diffs", "artifact_diffs", "block_diffs", "summary", "read_only"), (), True, "Read-only slot comparison."),
+    JsonPayloadContract("fixture_doctor", "fixture-doctor FIXTURES --json", ("fixture_root", "ok", "issues", "warnings", "checked_slots", "status"), (), True, "Fixture corpus doctor."),
     JsonPayloadContract("global_labels", "global-labels --json", ("labels", "count", "block_index", "read_only", "confidence_values"), (), True, "Read-only global label catalog."),
     JsonPayloadContract("globals_scan", "globals-scan SLOT --json", ("slot_path", "candidates"), (), True, "Read-only global/script candidate scan."),
     JsonPayloadContract("fixture_status", "fixture-status FIXTURES --json", ("fixture_root", "ok", "issues", "manifest_count"), ("present", "recommended", "missing_recommended", "coverage_categories", "coverage_score"), True, "Fixture corpus status."),
