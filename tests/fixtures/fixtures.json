@@ -1,0 +1,14 @@
+{
+  "SLOT01": {
+    "description": "Uploaded baseline save used for parser regression",
+    "save_dat_size": 38155,
+    "version": "1.02R",
+    "player_name": "yay",
+    "current_map_file": "V13ENT.sav",
+    "function5_start": "0x88CC",
+    "function6_start": "0x8B38",
+    "inventory_count": 5,
+    "kill_count_count": 15,
+    "expected_artifacts": ["AUTOMAP.SAV", "V13ENT.SAV"]
+  }
+}

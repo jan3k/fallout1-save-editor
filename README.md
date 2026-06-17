@@ -10,6 +10,7 @@ Implemented:
 
 - full slot discovery for `SAVE.DAT`, `.SAV`, `AUTOMAP.SAV` fingerprints;
 - `SAVE.DAT` header parser;
+- source-aligned registry for the 27 Fallout 1 load/save handlers;
 - dynamic `Function 5` detection by `00 00 46 50` / `FP`;
 - dynamic inventory item-size inference for Function 5;
 - `Function 6` critter/player stats parser;
@@ -33,6 +34,7 @@ Implemented:
 - backup before write;
 - atomic write via temp file + fsync + rename;
 - no-change round-trip tests;
+- fixture matrix for multi-save parser regression;
 - `f1se gui` Tkinter/ttk GUI over the same parser/writer.
 
 Preserved raw, not fully semantic yet:
@@ -158,6 +160,12 @@ Default mode is `raw`: only the selected 4 bytes change.
 
 It does not emulate all perk/trait/addiction side effects. Trait effects are exposed as preview metadata, not blindly written into saved base stats.
 
+## Fixtures
+
+Parser-regression fixtures are declared in `tests/fixtures/fixtures.json`. Each fixture points at a real save slot directory under `tests/fixtures` and records stable anchors such as Function 5 start, Function 6 start, inventory count and kill-count count.
+
+See `docs/fixtures.md` for the fixture workflow. Do not update fixture offsets blindly: if an anchor moves, the parser change must explain why the new anchor is more correct.
+
 ## Tests
 
 ```bash
@@ -165,7 +173,7 @@ cd fallout1-save-editor
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 ```
 
-Expected result for the included fixture: `25 tests`, `OK`.
+Expected result: all tests pass with `OK`.
 
 ## Risk levels
 
