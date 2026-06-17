@@ -7,7 +7,7 @@ import json
 import shutil
 from typing import Any
 
-from f1se.format.slot import ARTIFACT_MAP_SAV, SaveSlot
+from f1se.format.slot import SaveSlot
 
 IGNORED_SUFFIXES = {".bak", ".tmp"}
 IGNORED_NAMES = {".f1se-backups", "__pycache__"}
@@ -73,7 +73,7 @@ def _copyable_files(slot_path: Path) -> list[Path]:
 
 def build_manifest_entry(slot: SaveSlot, description: str = "Imported real Fallout 1 save fixture") -> dict[str, Any]:
     sd = slot.save_dat
-    entry: dict[str, Any] = {
+    return {
         "description": description,
         "save_dat_size": len(sd.data),
         "version": sd.header.version,
@@ -86,32 +86,6 @@ def build_manifest_entry(slot: SaveSlot, description: str = "Imported real Fallo
         "expected_artifacts": [artifact.name for artifact in slot.artifacts],
         "expected_artifact_kinds": {artifact.name: artifact.kind for artifact in slot.artifacts},
     }
-    entry["expected_raw_blocks"] = {
-        str(index): {"name": sd.blocks[index].name, "start": _hex(sd.blocks[index].start), "end": _hex(sd.blocks[index].end)}
-        for index in (2, 3, 4, 20, 25)
-        if index < len(sd.blocks)
-    }
-    maps = {
-        artifact.name: {"kind": artifact.kind, "parser_status": artifact.parser_status, "min_size": 1}
-        for artifact in slot.artifacts
-        if artifact.kind == ARTIFACT_MAP_SAV
-    }
-    if maps:
-        entry["expected_map_artifacts"] = maps
-    if sd.player_object.inventory:
-        entry["expected_inventory"] = [
-            {
-                "index": item.index,
-                "offset": _hex(item.start),
-                "pid": item.pid,
-                "size": _hex(item.size),
-                "quantity": item.quantity,
-                "known_pid": item.known_pid,
-                "type": item.type_name,
-            }
-            for item in sd.player_object.inventory
-        ]
-    return entry
 
 
 def fixture_import_plan(source: str | Path, fixture_root: str | Path, name: str, *, force: bool = False, description: str = "Imported real Fallout 1 save fixture") -> FixtureImportPlan:
@@ -164,11 +138,12 @@ def fixture_status(fixture_root: str | Path) -> dict[str, Any]:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     present = set(manifest)
     recommended = [row["name"] for row in RECOMMENDED_FIXTURES]
-    present_recommended = [name for name in recommended if name in present]
-    missing_recommended = [name for name in recommended if name not in present]
-    categories: set[str] = set()
-    if "SLOT01" in present or "SLOT01_BASELINE" in present:
-        categories.add("baseline")
+    equivalent_present = set(present)
+    if "SLOT01" in present:
+        equivalent_present.add("SLOT01_BASELINE")
+    present_recommended = [name for name in recommended if name in equivalent_present]
+    missing_recommended = [name for name in recommended if name not in equivalent_present]
+    categories: set[str] = {"baseline"} if "SLOT01" in present or "SLOT01_BASELINE" in present else set()
     for name in present:
         low = name.lower()
         for marker, category in [("combat", "combat"), ("inventory", "inventory"), ("perk", "perks"), ("poison", "status_effects"), ("rad", "status_effects"), ("crippled", "status_effects"), ("world", "worldmap"), ("transition", "map_transition"), ("companion", "party"), ("late", "late_game"), ("corruption", "negative"), ("negative", "negative")]:
