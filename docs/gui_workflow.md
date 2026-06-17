@@ -49,6 +49,10 @@ The GUI exposes read-only diagnostic tabs for:
 
 These views are for inspection only and do not enable map, quest, global, worldmap, party, or container writes.
 
+## Feature matrix payload
+
+The GUI model exposes `feature_matrix_payload()` so the interface can show implementation status, risk class, F12se positioning and recommended roadmap without X11-specific tests.
+
 ## RAW workflow
 
 Raw writes stay separate from field editing and still require the explicit experimental acknowledgement.
