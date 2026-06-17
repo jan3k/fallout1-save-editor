@@ -10,6 +10,7 @@ Implemented:
 
 - `SAVE.DAT` header and source-aligned 27 handler block registry;
 - SAFE fixed-width editing for player stats, S.P.E.C.I.A.L., skills, traits, kills, PC stats and existing inventory quantities/ammo fields;
+- guided quantity workflow for existing inventory rows;
 - ADVANCED fixed-width editing for derived stats, raw perk ranks and selected lower-level fields;
 - read-only inventory metadata, artifact fingerprints, raw block inspection, global-state candidate scan and map `.SAV` scan;
 - CLI and guided Tkinter/ttk GUI with preview diff, backup, atomic write, raw-write experimental gate and ADVANCED acknowledgement;
@@ -31,6 +32,9 @@ f1se inspect /path/to/SLOT
 f1se dump /path/to/SLOT --json
 f1se fields /path/to/SLOT
 f1se inventory /path/to/SLOT --json
+f1se inventory-editable /path/to/SLOT --json
+f1se inventory-set-quantity /path/to/SLOT --index 3 --quantity 20 --dry-run
+f1se inventory-set-quantity /path/to/SLOT --index 3 --quantity 20 --write
 f1se artifacts /path/to/SLOT --json
 f1se raw-blocks /path/to/SLOT --json
 f1se globals-scan /path/to/SLOT --json
@@ -69,6 +73,7 @@ See:
 - `docs/risk_levels.md`
 - `docs/source_alignment.md`
 - `docs/gui_workflow.md`
+- `docs/inventory_workflow.md`
 
 ## Tests
 
