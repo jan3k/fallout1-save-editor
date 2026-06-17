@@ -2,7 +2,7 @@
 
 Risk levels describe write safety. They are independent from parser visibility: a field can be visible in the UI and still remain `ADVANCED`, `EXPERIMENTAL` or raw-preserved.
 
-Read-only metadata, such as known item/proto names, inventory parser confidence, slot artifact fingerprints, raw block discovery and GUI diagnostic payloads, does not change a field or file's write safety.
+Read-only metadata, such as known item/proto names, inventory parser confidence, slot artifact fingerprints, raw block discovery, feature matrix rows and GUI diagnostic payloads, does not change a field or file's write safety.
 
 ## SAFE
 
@@ -47,6 +47,10 @@ Operations that can alter structure length or object identity:
 - `.SAV`/`AUTOMAP.SAV` rebuild or semantic write.
 
 High-level `EXPERIMENTAL` operations are intentionally not implemented until there are enough real fixtures and source-aligned parser tests to protect round-trip behaviour.
+
+## READ_ONLY / DIAGNOSTIC
+
+Feature matrix statuses such as `read-only` and `diagnostic` make parser visibility explicit without creating write permission.
 
 ## RAW
 
