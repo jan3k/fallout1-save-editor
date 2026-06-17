@@ -2,6 +2,8 @@
 
 Risk levels describe write safety. They are independent from parser visibility: a field can be visible in the UI and still remain `ADVANCED`, `EXPERIMENTAL` or raw-preserved.
 
+Read-only metadata, such as known item/proto names and inventory parser confidence, does not change a field's write safety.
+
 ## SAFE
 
 Fixed-width fields with local byte edits and conservative validation:

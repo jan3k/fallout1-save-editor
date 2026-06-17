@@ -13,6 +13,8 @@ Implemented:
 - source-aligned registry for the 27 Fallout 1 load/save handlers;
 - dynamic `Function 5` detection by `00 00 46 50` / `FP`;
 - dynamic inventory item-size inference for Function 5;
+- read-only item/proto metadata for known Fallout 1 PIDs;
+- inventory confidence metadata for known-vs-heuristic item parsing;
 - `Function 6` critter/player stats parser;
 - Function 7 kill-count field registry and SAFE editing;
 - SAFE editing for:
@@ -35,6 +37,8 @@ Implemented:
 - atomic write via temp file + fsync + rename;
 - no-change round-trip tests;
 - fixture matrix for multi-save parser regression;
+- fixture snapshot CLI for generating manifest entries;
+- `f1se inventory` read-only inventory/proto view;
 - `f1se gui` Tkinter/ttk GUI over the same parser/writer.
 
 Preserved raw, not fully semantic yet:
@@ -68,6 +72,9 @@ Python 3.12+ is recommended.
 f1se inspect /path/to/SLOT
 f1se dump /path/to/SLOT --json
 f1se fields /path/to/SLOT
+f1se inventory /path/to/SLOT
+f1se inventory /path/to/SLOT --json
+f1se fixture-snapshot /path/to/SLOT --name SLOT02_AFTER_COMBAT --json
 f1se get /path/to/SLOT player.base_strength
 f1se set /path/to/SLOT player.base_strength 10 --dry-run
 f1se set /path/to/SLOT player.base_strength 10 --write
@@ -164,7 +171,19 @@ It does not emulate all perk/trait/addiction side effects. Trait effects are exp
 
 Parser-regression fixtures are declared in `tests/fixtures/fixtures.json`. Each fixture points at a real save slot directory under `tests/fixtures` and records stable anchors such as Function 5 start, Function 6 start, inventory count and kill-count count.
 
+Generate a manifest entry for a real slot with:
+
+```bash
+f1se fixture-snapshot /path/to/SLOT --name SLOT02_AFTER_COMBAT --json
+```
+
 See `docs/fixtures.md` for the fixture workflow. Do not update fixture offsets blindly: if an anchor moves, the parser change must explain why the new anchor is more correct.
+
+## Inventory metadata
+
+`f1se inventory SLOT --json` exposes read-only item metadata, parser confidence and whether each PID is known. A known PID only improves display and size inference; it does **not** make PID/FID/type mutation safe.
+
+See `docs/inventory.md` for details.
 
 ## Tests
 

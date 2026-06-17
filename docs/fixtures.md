@@ -17,6 +17,24 @@ tests/fixtures/
 
 Use real save slots only. Do not invent synthetic binary save files unless the test is specifically checking rejection of malformed input.
 
+## Naming convention
+
+Prefer descriptive, stable names:
+
+```text
+SLOT01_BASELINE
+SLOT02_AFTER_COMBAT
+SLOT03_BIG_INVENTORY
+SLOT04_WITH_PERKS
+SLOT05_POISON_RAD_CRIPPLED
+SLOT06_WORLD_MAP_TRAVEL
+SLOT07_MAP_TRANSITION
+SLOT08_WITH_COMPANION
+SLOT09_LATE_GAME
+```
+
+The existing `SLOT01` fixture keeps its historical name for compatibility.
+
 ## Manifest format
 
 Each key in `fixtures.json` is a slot directory under `tests/fixtures`:
@@ -40,12 +58,34 @@ Each key in `fixtures.json` is a slot directory under `tests/fixtures`:
 
 Hex strings are accepted for offsets. Counts are decimal integers.
 
+## Generating a manifest entry
+
+Use `fixture-snapshot` to generate a JSON object for a real slot:
+
+```bash
+PYTHONPATH=src python3 -m f1se fixture-snapshot tests/fixtures/SLOT01 --name SLOT01 --json
+```
+
+Optional fields:
+
+```bash
+PYTHONPATH=src python3 -m f1se fixture-snapshot tests/fixtures/SLOT01 \
+  --name SLOT01 \
+  --description "Uploaded baseline save used for parser regression" \
+  --include-sha256 \
+  --include-warnings \
+  --json
+```
+
+The command does not modify `fixtures.json`; copy the generated entry manually after reviewing it.
+
 ## Adding a fixture
 
-1. Add a complete save slot directory under `tests/fixtures`.
+1. Add a complete real save slot directory under `tests/fixtures`.
 2. Keep `SAVE.DAT` plus all slot artifacts that belong to the save, for example `.SAV` map files and `AUTOMAP.SAV`.
-3. Run `f1se inspect tests/fixtures/<SLOT>` and record the stable parser anchors in `fixtures.json`.
-4. Run:
+3. Run `f1se fixture-snapshot tests/fixtures/<SLOT> --name <SLOT> --json`.
+4. Copy the generated manifest entry into `tests/fixtures/fixtures.json`.
+5. Run:
 
 ```bash
 PYTHONPATH=src python3 -m unittest discover -s tests -v
@@ -61,6 +101,26 @@ The fixture matrix checks:
 - `verify()` returns no issues;
 - no-change parse is byte-identical;
 - all 27 source-order function blocks are monotonic and stay inside `SAVE.DAT`.
+
+## Recommended fixture corpus
+
+The target corpus should eventually cover:
+
+```text
+tests/fixtures/
+  SLOT01_BASELINE/
+  SLOT02_AFTER_COMBAT/
+  SLOT03_BIG_INVENTORY/
+  SLOT04_WITH_PERKS/
+  SLOT05_POISON_RAD_CRIPPLED/
+  SLOT06_WORLD_MAP_TRAVEL/
+  SLOT07_MAP_TRANSITION/
+  SLOT08_WITH_COMPANION/
+  SLOT09_LATE_GAME/
+  SLOT10_CORRUPTION_NEGATIVE/
+```
+
+`SLOT10_CORRUPTION_NEGATIVE` should not be a fake normal save. Prefer negative tests that mutate a real fixture in memory or in a temporary directory.
 
 ## Regression rule
 
