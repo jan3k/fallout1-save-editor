@@ -49,6 +49,18 @@ class FixtureMatrixTests(unittest.TestCase):
                 self.assertEqual(len(sd.player_object.inventory), expected["inventory_count"])
                 self.assertEqual(sd.kill_count_count, expected["kill_count_count"])
                 self.assertEqual({artifact.name for artifact in slot.artifacts}, set(expected["expected_artifacts"]))
+                if "expected_artifact_kinds" in expected:
+                    actual_kinds = {artifact.name: artifact.kind for artifact in slot.artifacts}
+                    self.assertEqual(actual_kinds, expected["expected_artifact_kinds"])
+                if "expected_inventory" in expected:
+                    for row in expected["expected_inventory"]:
+                        item = sd.player_object.inventory[int(row["index"])]
+                        self.assertEqual(item.start, _hex_or_int(row["offset"]))
+                        self.assertEqual(item.pid, row["pid"])
+                        self.assertEqual(item.size, _hex_or_int(row["size"]))
+                        self.assertEqual(item.quantity, row["quantity"])
+                        self.assertEqual(item.known_pid, row["known_pid"])
+                        self.assertEqual(item.type_name, row["type"])
 
                 self.assertEqual(sd.verify(), [])
                 self.assertEqual(bytes(sd.data), original)
