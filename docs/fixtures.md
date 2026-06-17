@@ -17,6 +17,18 @@ tests/fixtures/
 
 Use real save slots only. Do not invent synthetic binary save files unless the test is specifically checking rejection of malformed input.
 
+## Guided commands
+
+```bash
+f1se fixture-plan --json
+f1se fixture-status tests/fixtures --json
+f1se fixture-import /path/to/SLOT --fixture-root tests/fixtures --name SLOT02_AFTER_COMBAT --dry-run
+f1se fixture-import /path/to/SLOT --fixture-root tests/fixtures --name SLOT02_AFTER_COMBAT --write
+f1se fixture-check tests/fixtures --json
+```
+
+`fixture-import` copies only relevant slot files: `SAVE.DAT`, `AUTOMAP.SAV` and map `.SAV` artifacts. It skips `.f1se-backups`, `*.bak` and `*.tmp`.
+
 ## Naming convention
 
 Prefer descriptive, stable names:
@@ -37,71 +49,20 @@ The existing `SLOT01` fixture keeps its historical name for compatibility.
 
 ## Manifest format
 
-Each key in `fixtures.json` is a slot directory under `tests/fixtures`:
-
-```json
-{
-  "SLOT01": {
-    "description": "Uploaded baseline save used for parser regression",
-    "save_dat_size": 38155,
-    "version": "1.02R",
-    "player_name": "yay",
-    "current_map_file": "V13ENT.sav",
-    "function5_start": "0x88CC",
-    "function6_start": "0x8B38",
-    "inventory_count": 5,
-    "kill_count_count": 15,
-    "expected_artifacts": ["AUTOMAP.SAV", "V13ENT.SAV"],
-    "expected_artifact_kinds": {
-      "AUTOMAP.SAV": "AUTOMAP_SAV",
-      "V13ENT.SAV": "MAP_SAV"
-    }
-  }
-}
-```
+Each key in `fixtures.json` is a slot directory under `tests/fixtures` and records stable parser anchors, artifact names/kinds and optional inventory/raw/map assertions.
 
 Hex strings are accepted for offsets. Counts are decimal integers.
 
 Optional `expected_inventory` rows can assert existing inventory offsets, PIDs, sizes and quantities when the fixture is intended to protect inventory parser behaviour.
 
-## Generating a manifest entry
-
-Use `fixture-snapshot` to generate a JSON object for a real slot:
-
-```bash
-PYTHONPATH=src python3 -m f1se fixture-snapshot tests/fixtures/SLOT01 --name SLOT01 --json
-```
-
-Optional fields:
-
-```bash
-PYTHONPATH=src python3 -m f1se fixture-snapshot tests/fixtures/SLOT01 \
-  --name SLOT01 \
-  --description "Uploaded baseline save used for parser regression" \
-  --include-sha256 \
-  --include-warnings \
-  --json
-```
-
-The command does not modify `fixtures.json`; copy the generated entry manually after reviewing it.
-
-## Checking a fixture corpus
-
-Use `fixture-check` to validate `fixtures.json` against real slot directories:
-
-```bash
-PYTHONPATH=src python3 -m f1se fixture-check tests/fixtures
-PYTHONPATH=src python3 -m f1se fixture-check tests/fixtures --json
-```
-
-The command checks slot existence, `SAVE.DAT`, source anchors, header values, artifact names, artifact kinds, optional inventory rows and `SaveDat.verify()`.
+Optional `expected_raw_blocks` entries can assert raw block boundaries. Optional `expected_map_artifacts` entries can assert map artifact kind/status/size.
 
 ## Adding a fixture
 
-1. Add a complete real save slot directory under `tests/fixtures`.
-2. Keep `SAVE.DAT` plus all slot artifacts that belong to the save, for example `.SAV` map files and `AUTOMAP.SAV`.
-3. Run `f1se fixture-snapshot tests/fixtures/<SLOT> --name <SLOT> --json`.
-4. Copy the generated manifest entry into `tests/fixtures/fixtures.json`.
+1. Pick or create a real Fallout 1 save with the desired coverage.
+2. Run `f1se fixture-import ... --dry-run`.
+3. Review generated files and manifest entry.
+4. Run `f1se fixture-import ... --write`.
 5. Run `f1se fixture-check tests/fixtures --json`.
 6. Run:
 
@@ -117,7 +78,7 @@ The fixture matrix checks:
 - inventory count and kill-count count match the manifest;
 - slot artifacts match the manifest;
 - artifact kinds match the manifest;
-- optional expected inventory rows match parser output;
+- optional raw/map/inventory expectations match parser output;
 - `verify()` returns no issues;
 - no-change parse is byte-identical;
 - all 27 source-order function blocks are monotonic and stay inside `SAVE.DAT`.
