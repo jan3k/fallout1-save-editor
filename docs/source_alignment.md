@@ -12,6 +12,10 @@ The editor follows `alexbatalov/fallout1-ce` as the primary source for handler o
 
 The registry is not a serializer. It must not be used to rebuild `SAVE.DAT` from semantic objects. Unknown or partially understood ranges remain raw and must stay byte-identical on no-change round trips.
 
+## Feature matrix
+
+`src/f1se/project/features.py` records project capabilities, risk classes, interface coverage, fixture coverage and F12se positioning. It is documentation/test metadata only; it does not enable writes.
+
 ## Item metadata
 
 `src/f1se/schema/items.py` contains read-only item metadata used by the parser and CLI. It is display and inference data only, not a serializer.
