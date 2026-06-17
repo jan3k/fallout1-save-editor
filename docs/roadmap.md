@@ -1,6 +1,6 @@
 # Roadmap
 
-The roadmap keeps `f1se` more conservative than traditional save editors while moving toward broader feature coverage.
+The roadmap keeps `f1se` conservative in writes while expanding safe read-only visibility and fixture coverage.
 
 ## Milestones
 
@@ -20,10 +20,10 @@ The roadmap keeps `f1se` more conservative than traditional save editors while m
 - `EXPERIMENTAL` - operations that may alter structure or identity.
 - `OUT_OF_SCOPE` - intentionally not planned until source and fixtures justify it.
 
-## Fixture corpus workflow
+## Label groundwork
 
-`fixture-plan`, `fixture-status` and `fixture-import` make real save expansion repeatable. More real saves are required before adding high-risk editor features.
+`global-labels` adds broad candidate-region names with confidence and source notes. It does not assign individual variable names.
 
 ## Next priority
 
-The next practical milestone is safer UX for existing player-inventory workflows, still limited to already-supported fixed-width fields.
+The next practical milestone is deeper map object scan diagnostics.
