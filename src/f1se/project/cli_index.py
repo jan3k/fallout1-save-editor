@@ -1,0 +1,58 @@
+from __future__ import annotations
+
+PUBLIC_COMMANDS = (
+    "inspect",
+    "dump",
+    "fields",
+    "inventory",
+    "inventory-editable",
+    "inventory-set-quantity",
+    "artifacts",
+    "raw-blocks",
+    "globals-scan",
+    "global-labels",
+    "map-scan",
+    "map-summary",
+    "features",
+    "fixture-plan",
+    "fixture-status",
+    "fixture-import",
+    "fixture-snapshot",
+    "fixture-check",
+    "get",
+    "set",
+    "patch",
+    "preset",
+    "effective",
+    "backup",
+    "verify",
+    "gui",
+    "raw-read",
+    "raw-write",
+)
+
+JSON_COMMANDS = {
+    "dump",
+    "inventory",
+    "inventory-editable",
+    "artifacts",
+    "raw-blocks",
+    "globals-scan",
+    "global-labels",
+    "map-scan",
+    "map-summary",
+    "features",
+    "fixture-plan",
+    "fixture-status",
+    "fixture-import",
+    "fixture-snapshot",
+    "fixture-check",
+    "effective",
+}
+
+
+def commands_payload() -> dict:
+    return {
+        "count": len(PUBLIC_COMMANDS),
+        "commands": [{"name": name, "json": name in JSON_COMMANDS} for name in PUBLIC_COMMANDS],
+    }
