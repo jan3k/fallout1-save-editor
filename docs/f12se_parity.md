@@ -30,7 +30,7 @@ The feature matrix classifies each capability by:
 - byte-identical no-change round trips;
 - fixture matrix;
 - explicit source-aligned save handler registry;
-- diagnostics for raw blocks, artifacts, map scan and global-state candidates;
+- diagnostics for raw blocks, artifacts, map scan, global-state candidates and global labels;
 - guided GUI safety workflow.
 
 ## Where f1se is intentionally behind
@@ -42,4 +42,4 @@ The feature matrix classifies each capability by:
 - party/worldmap writes;
 - `.SAV` and `AUTOMAP.SAV` rebuilds.
 
-These gaps are deliberate until the implementation is source-aligned and fixture-covered.
+These gaps are deliberate until the implementation is source-aligned and fixture-covered. Global labels are diagnostic context, not a write feature.
