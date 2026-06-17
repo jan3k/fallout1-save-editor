@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from f1se.io.endian import i32be, u32be
-from f1se.schema.enums import ITEM_PID_NAMES
+from f1se.schema.items import ItemProtoMeta, get_item_meta, item_size_options
 
 
 @dataclass(slots=True)
@@ -19,13 +20,17 @@ class ParsedInventoryItem:
     ammo_or_charges: int | None
     ammo_type: int | None
     raw_fields: dict[str, int]
+    known_pid: bool
+    size_source: str
+    confidence: str
+    item_meta: ItemProtoMeta | None = None
     warnings: list[str] = field(default_factory=list)
 
     @property
     def size(self) -> int:
         return self.end - self.start
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "index": self.index,
             "start": self.start,
@@ -34,12 +39,16 @@ class ParsedInventoryItem:
             "end_hex": f"0x{self.end:X}",
             "size": self.size,
             "size_hex": f"0x{self.size:X}",
+            "size_source": self.size_source,
+            "confidence": self.confidence,
             "quantity": self.quantity,
             "pid": self.pid,
+            "known_pid": self.known_pid,
             "type": self.type_name,
             "name": self.object_name,
             "ammo_or_charges": self.ammo_or_charges,
             "ammo_type": self.ammo_type,
+            "item_meta": self.item_meta.to_dict() if self.item_meta is not None else None,
             "raw_fields": self.raw_fields,
             "warnings": list(self.warnings),
         }
@@ -67,20 +76,13 @@ def _looks_like_f6(data: bytes | bytearray, off: int) -> bool:
     return True
 
 
-def _size_options_for_pid(pid: int) -> list[int]:
-    if pid in ITEM_PID_NAMES:
-        return [ITEM_PID_NAMES[pid][2]]
-    # Fallout object payload is type-dependent. These are the common terminal sizes
-    # encountered in Fallout 1/Fallout 2 object serialization for inventory items.
-    return [0x64, 0x60, 0x5C]
-
-
 def infer_inventory(data: bytes | bytearray, start: int, count: int) -> tuple[list[ParsedInventoryItem], int]:
     """Parse Function 5 inventory and return (items, function6_start).
 
     Function 5 item entries are variable-sized. For known PIDs we use a curated
-    Fallout 1 map. For unknown PIDs we try common object tail sizes and accept
-    the path whose post-inventory camera dword is followed by a valid Function 6.
+    Fallout 1 read-only metadata map. For unknown PIDs we try common object tail
+    sizes and accept the path whose post-inventory camera dword is followed by a
+    valid Function 6.
     """
     if count < 0 or count > 10_000:
         raise ValueError(f"unreasonable inventory count: {count}")
@@ -106,7 +108,7 @@ def infer_inventory(data: bytes | bytearray, start: int, count: int) -> tuple[li
         except ValueError:
             memo[key] = None
             return None
-        for size in _size_options_for_pid(pid):
+        for size in item_size_options(pid):
             if pos + size > len(data):
                 continue
             try:
@@ -133,7 +135,19 @@ def infer_inventory(data: bytes | bytearray, start: int, count: int) -> tuple[li
     out: list[ParsedInventoryItem] = []
     for idx, (pos, size) in enumerate(chunks):
         pid = i32be(data, pos + 0x30)
-        name, item_type, _known_size = ITEM_PID_NAMES.get(pid, (f"pid_{pid}", "unknown", size))
+        meta = get_item_meta(pid)
+        if meta is not None:
+            name = meta.name
+            item_type = meta.type_name
+            known_pid = True
+            size_source = "known_pid"
+            confidence = "high"
+        else:
+            name = f"pid_{pid}"
+            item_type = "unknown"
+            known_pid = False
+            size_source = "heuristic"
+            confidence = "medium"
         raw = {
             "location": i32be(data, pos + 0x08),
             "frm_id": i32be(data, pos + 0x24),
@@ -145,7 +159,7 @@ def infer_inventory(data: bytes | bytearray, start: int, count: int) -> tuple[li
         ammo_or_charges = i32be(data, pos + 0x5C) if size >= 0x60 else None
         ammo_type = i32be(data, pos + 0x60) if size >= 0x64 else None
         warnings: list[str] = []
-        if pid not in ITEM_PID_NAMES:
+        if meta is None:
             warnings.append("unknown PID; size inferred heuristically")
         out.append(ParsedInventoryItem(
             index=idx,
@@ -158,6 +172,10 @@ def infer_inventory(data: bytes | bytearray, start: int, count: int) -> tuple[li
             ammo_or_charges=ammo_or_charges,
             ammo_type=ammo_type,
             raw_fields=raw,
+            known_pid=known_pid,
+            size_source=size_source,
+            confidence=confidence,
+            item_meta=meta,
             warnings=warnings,
         ))
     return out, f6_start
