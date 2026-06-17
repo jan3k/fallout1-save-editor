@@ -9,7 +9,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from f1se.format.slot import SaveSlot
+from f1se.format.global_state import discover_global_state_candidates
+from f1se.format.map_objects import scan_map_objects
+from f1se.format.raw_inspection import inspect_raw_blocks
+from f1se.format.slot import ARTIFACT_MAP_SAV, SaveSlot
 from f1se.format.save_dat import SaveDat
 from f1se.io.atomic_write import atomic_write_bytes
 from f1se.io.backup import backup_slot
@@ -21,6 +24,69 @@ class WriteResult:
     diffs: list[Diff]
     backup_path: Path | None
     written: bool
+
+
+@dataclass(slots=True)
+class PatchFieldSummary:
+    name: str
+    risk: str
+    offset: int
+    old_value: int
+    new_value: int
+    old_bytes: str
+    new_bytes: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "risk": self.risk,
+            "offset": self.offset,
+            "offset_hex": f"0x{self.offset:X}",
+            "old_value": self.old_value,
+            "new_value": self.new_value,
+            "old_bytes": self.old_bytes,
+            "new_bytes": self.new_bytes,
+        }
+
+
+@dataclass(slots=True)
+class PatchRiskSummary:
+    changed_field_count: int
+    risks: list[str]
+    contains_advanced: bool
+    safe_only: bool
+    requires_advanced_confirmation: bool
+    fields: list[PatchFieldSummary]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "changed_field_count": self.changed_field_count,
+            "risks": list(self.risks),
+            "contains_advanced": self.contains_advanced,
+            "safe_only": self.safe_only,
+            "requires_advanced_confirmation": self.requires_advanced_confirmation,
+            "backup_before_write": True,
+            "atomic_write": True,
+            "fields": [field.to_dict() for field in self.fields],
+        }
+
+
+@dataclass(slots=True)
+class DirtyState:
+    dirty: bool
+    changed_field_count: int
+    risks: list[str]
+    safe_only: bool
+    contains_advanced: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "dirty": self.dirty,
+            "changed_field_count": self.changed_field_count,
+            "risks": list(self.risks),
+            "safe_only": self.safe_only,
+            "contains_advanced": self.contains_advanced,
+        }
 
 
 def format_diff(diff: Diff) -> str:
@@ -94,6 +160,83 @@ class SaveEditorSession:
 
     def preset_patch(self, preset: str) -> dict[str, int]:
         return self.save_dat.preset_patch(preset)
+
+    def artifacts_payload(self) -> dict[str, Any]:
+        return {"slot_path": str(self.slot_path), "artifacts": [artifact.to_dict() for artifact in self.slot.artifacts]}
+
+    def raw_blocks_payload(self) -> dict[str, Any]:
+        return {"slot_path": str(self.slot_path), "raw_blocks": [row.to_dict() for row in inspect_raw_blocks(self.save_dat.data, self.save_dat.blocks)]}
+
+    def globals_scan_payload(self) -> dict[str, Any]:
+        return {"slot_path": str(self.slot_path), "candidates": [row.to_dict() for row in discover_global_state_candidates(self.save_dat.data, self.save_dat.blocks)]}
+
+    def map_scan_payload(self) -> dict[str, Any]:
+        rows: list[dict[str, Any]] = []
+        for artifact in self.slot.artifacts:
+            if artifact.kind == ARTIFACT_MAP_SAV:
+                rows.append(scan_map_objects(self.slot_path / artifact.name).to_dict())
+        return {"slot_path": str(self.slot_path), "maps": rows}
+
+    def validation_summary(self) -> dict[str, Any]:
+        issues = self.validation_issues()
+        warnings = list(dict.fromkeys(self.save_dat.warnings))
+        artifact_warnings = [f"{artifact.name}: {warning}" for artifact in self.slot.artifacts for warning in artifact.warnings]
+        raw_warnings = [f"{row.name}: {warning}" for row in inspect_raw_blocks(self.save_dat.data, self.save_dat.blocks) for warning in row.warnings]
+        map_warnings = [f"{row['file_name']}: {warning}" for row in self.map_scan_payload()["maps"] for warning in row.get("warnings", [])]
+        status = "FAIL" if issues else "WARN" if warnings or artifact_warnings or raw_warnings or map_warnings else "OK"
+        return {
+            "status": status,
+            "issues": issues,
+            "warnings": warnings,
+            "artifact_warnings": artifact_warnings,
+            "raw_block_warnings": raw_warnings,
+            "map_scan_warnings": map_warnings,
+        }
+
+    def patch_risk_summary(self, patch: dict[str, int]) -> PatchRiskSummary:
+        fields: list[PatchFieldSummary] = []
+        risks: set[str] = set()
+        for name, value in patch.items():
+            field = self.save_dat.fields[name]
+            old_bytes = bytes(self.save_dat.data[field.abs_offset:field.abs_offset + field.size])
+            new_bytes = int(value).to_bytes(field.size, "big", signed=True)
+            fields.append(PatchFieldSummary(
+                name=name,
+                risk=field.risk,
+                offset=field.abs_offset,
+                old_value=int(field.value),
+                new_value=int(value),
+                old_bytes=old_bytes.hex(),
+                new_bytes=new_bytes.hex(),
+            ))
+            risks.add(field.risk)
+        ordered_risks = sorted(risks)
+        contains_advanced = any(risk == "ADVANCED" for risk in risks)
+        safe_only = bool(fields) and risks == {"SAFE"}
+        return PatchRiskSummary(
+            changed_field_count=len(fields),
+            risks=ordered_risks,
+            contains_advanced=contains_advanced,
+            safe_only=safe_only,
+            requires_advanced_confirmation=contains_advanced,
+            fields=fields,
+        )
+
+    def dirty_state(self, patch: dict[str, int]) -> DirtyState:
+        summary = self.patch_risk_summary(patch)
+        return DirtyState(
+            dirty=summary.changed_field_count > 0,
+            changed_field_count=summary.changed_field_count,
+            risks=summary.risks,
+            safe_only=summary.safe_only,
+            contains_advanced=summary.contains_advanced,
+        )
+
+    def reset_changes_model(self) -> dict[str, int]:
+        return {name: int(field.value) for name, field in self.save_dat.fields.items() if field.writable and field.type_name == "i32"}
+
+    def requires_advanced_confirmation(self, patch: dict[str, int]) -> bool:
+        return self.patch_risk_summary(patch).requires_advanced_confirmation
 
     def preview_patch(self, patch: dict[str, int], *, allow_out_of_range: bool = False, mode: str = "raw") -> list[Diff]:
         staged = self.save_dat.clone()
