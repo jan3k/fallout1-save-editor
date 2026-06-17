@@ -20,6 +20,10 @@ The roadmap keeps `f1se` more conservative than traditional save editors while m
 - `EXPERIMENTAL` - operations that may alter structure or identity.
 - `OUT_OF_SCOPE` - intentionally not planned until source and fixtures justify it.
 
-## Near-term priority
+## Fixture corpus workflow
 
-The next practical milestone is fixture corpus expansion. More real saves are required before adding high-risk editor features.
+`fixture-plan`, `fixture-status` and `fixture-import` make real save expansion repeatable. More real saves are required before adding high-risk editor features.
+
+## Next priority
+
+The next practical milestone is safer UX for existing player-inventory workflows, still limited to already-supported fixed-width fields.
