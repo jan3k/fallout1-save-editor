@@ -12,6 +12,9 @@ Implemented:
 - typed read-only slot artifact classification for `AUTOMAP.SAV`, map `.SAV`, and unknown files;
 - `SAVE.DAT` header parser;
 - source-aligned registry for the 27 Fallout 1 load/save handlers;
+- read-only raw block structural inspection;
+- read-only global/script-state candidate discovery;
+- read-only map `.SAV` candidate discovery;
 - dynamic `Function 5` detection by `00 00 46 50` / `FP`;
 - dynamic inventory item-size inference for Function 5;
 - read-only item/proto metadata for known Fallout 1 PIDs;
@@ -30,6 +33,7 @@ Implemented:
   - inventory quantity and known ammo/charges fields;
 - trait-effect metadata from Fallout 1 source logic;
 - static effective S.P.E.C.I.A.L. preview: base + bonus + always-on trait adjustments;
+- guided GUI safety model with read-only diagnostics, dirty-state summaries, and ADVANCED write acknowledgement;
 - conservative built-in presets: `max-special`, `heal`, `clear-crippled`;
 - raw perk-rank editing as `ADVANCED`;
 - partial options field registry;
@@ -79,8 +83,10 @@ f1se inventory /path/to/SLOT
 f1se inventory /path/to/SLOT --json
 f1se artifacts /path/to/SLOT
 f1se artifacts /path/to/SLOT --json
+f1se raw-blocks /path/to/SLOT --json
+f1se globals-scan /path/to/SLOT --json
+f1se map-scan /path/to/SLOT --json
 f1se fixture-snapshot /path/to/SLOT --name SLOT02_AFTER_COMBAT --json
-f1se fixture-check tests/fixtures
 f1se fixture-check tests/fixtures --json
 f1se get /path/to/SLOT player.base_strength
 f1se set /path/to/SLOT player.base_strength 10 --dry-run
@@ -90,7 +96,6 @@ f1se patch /path/to/SLOT patch.json --write
 f1se preset /path/to/SLOT max-special --dry-run
 f1se preset /path/to/SLOT heal --write
 f1se preset /path/to/SLOT clear-crippled --write
-f1se effective /path/to/SLOT
 f1se effective /path/to/SLOT --json
 f1se backup /path/to/SLOT
 f1se verify /path/to/SLOT
@@ -111,98 +116,11 @@ Launch:
 f1se gui /path/to/SLOT01
 ```
 
-The GUI is intentionally a thin Tkinter/ttk layer over the existing parser/writer. Tabs:
+The GUI is intentionally a thin Tkinter/ttk layer over the existing parser/writer. It exposes guided previews, risk labels, dirty-state summaries and read-only diagnostic tabs for artifacts, raw blocks, global scan and map scan.
 
-- Overview,
-- Player,
-- S.P.E.C.I.A.L.,
-- Skills,
-- Traits,
-- Inventory,
-- Perks,
-- Kills,
-- Options,
-- Fields,
-- Raw,
-- Validation.
+GUI writes still create a slot backup before atomically replacing `SAVE.DAT`. Patches that include `ADVANCED` fields require an additional acknowledgement. Raw writes require an explicit EXPERIMENTAL checkbox and confirmation.
 
-GUI writes still create a slot backup before atomically replacing `SAVE.DAT`. Raw writes require an explicit EXPERIMENTAL checkbox and confirmation.
-
-## Example patch
-
-```json
-{
-  "player.base_strength": 10,
-  "player.base_perception": 10,
-  "player.base_endurance": 10,
-  "player.base_charisma": 10,
-  "player.base_intelligence": 10,
-  "player.base_agility": 10,
-  "player.base_luck": 10,
-  "player.current_hp": 999,
-  "player.radiation": 0,
-  "player.poison": 0,
-  "pc.skill_points": 99,
-  "pc.level": 21,
-  "pc.experience": 190000
-}
-```
-
-Run:
-
-```bash
-f1se patch /path/to/SLOT patch.json --dry-run
-f1se patch /path/to/SLOT patch.json --write
-```
-
-## Raw vs semantic SPECIAL mode
-
-Default mode is `raw`: only the selected 4 bytes change.
-
-`--mode semantic` recalculates only conservative formulaic derived stats:
-
-- max HP,
-- action points,
-- armor class,
-- melee damage,
-- carry weight,
-- sequence,
-- healing rate,
-- critical chance,
-- radiation resistance,
-- poison resistance.
-
-It does not emulate all perk/trait/addiction side effects. Trait effects are exposed as preview metadata, not blindly written into saved base stats.
-
-## Fixtures
-
-Parser-regression fixtures are declared in `tests/fixtures/fixtures.json`. Each fixture points at a real save slot directory under `tests/fixtures` and records stable anchors such as Function 5 start, Function 6 start, inventory count and kill-count count.
-
-Generate a manifest entry for a real slot with:
-
-```bash
-f1se fixture-snapshot /path/to/SLOT --name SLOT02_AFTER_COMBAT --json
-```
-
-Validate the manifest against the fixture corpus with:
-
-```bash
-f1se fixture-check tests/fixtures --json
-```
-
-See `docs/fixtures.md` for the fixture workflow. Do not update fixture offsets blindly: if an anchor moves, the parser change must explain why the new anchor is more correct.
-
-## Inventory metadata
-
-`f1se inventory SLOT --json` exposes read-only item metadata, parser confidence and whether each PID is known. A known PID only improves display and size inference; it does **not** make PID/FID/type mutation safe.
-
-See `docs/inventory.md` for details.
-
-## Artifacts
-
-`f1se artifacts SLOT --json` exposes read-only fingerprints for non-`SAVE.DAT` slot files. `AUTOMAP.SAV` and map `.SAV` files are classified but not semantically edited.
-
-See `docs/artifacts.md` for details.
+See `docs/gui_workflow.md` for details.
 
 ## Tests
 
