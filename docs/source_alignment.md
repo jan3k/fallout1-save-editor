@@ -12,6 +12,10 @@ The editor follows `alexbatalov/fallout1-ce` as the primary source for handler o
 
 The registry is not a serializer. It must not be used to rebuild `SAVE.DAT` from semantic objects. Unknown or partially understood ranges remain raw and must stay byte-identical on no-change round trips.
 
+## Raw block discovery
+
+`src/f1se/format/raw_inspection.py` and `src/f1se/format/global_state.py` provide read-only diagnostics for preserved raw blocks and possible global/script state regions. They report structural properties only and do not assign quest names or enable writes.
+
 ## Item metadata
 
 `src/f1se/schema/items.py` contains read-only item metadata used by the parser and CLI. It is display and inference data only, not a serializer.
