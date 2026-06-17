@@ -69,6 +69,7 @@ FEATURES: tuple[FeatureStatus, ...] = (
     _f("automap.inspect", "automap", "Automap fingerprint", "read-only", "READ_ONLY", ["CLI", "GUI", "MODEL", "DOCS"], "Artifact inspection."),
     _f("raw.blocks", "raw blocks", "Raw block inspection", "diagnostic", "READ_ONLY", ["CLI", "GUI", "MODEL", "DOCS"], "Structural hints."),
     _f("global.scan", "global/script state", "Global/script scan", "diagnostic", "READ_ONLY", ["CLI", "GUI", "MODEL", "DOCS"], "Candidate scan."),
+    _f("global.labels", "global/script state", "Read-only global/script labels", "read-only", "READ_ONLY", ["CLI", "GUI", "MODEL", "DOCS"], "Diagnostic labels for candidate regions only."),
     _f("quest.state", "quest state", "Quest state", "planned", "N/A", ["DOCS"], "Needs naming and fixtures.", "none"),
     _f("worldmap.state", "worldmap", "Worldmap state", "diagnostic", "READ_ONLY", ["CLI", "GUI", "MODEL", "DOCS"], "Raw diagnostics."),
     _f("party.state", "party", "Party state", "planned", "N/A", ["DOCS"], "Future parser area.", "none"),
@@ -84,7 +85,6 @@ FEATURES: tuple[FeatureStatus, ...] = (
 )
 
 RECOMMENDED_NEXT_MILESTONES = [
-    "v0.13.0 - safer existing-inventory UX and item quantity workflows",
     "v0.14.0 - read-only quest/global naming groundwork",
     "v0.15.0 - map object deep scan",
     "v1.0.0 - stable safe editor",
@@ -109,9 +109,4 @@ def feature_counts_by_risk(features: Iterable[FeatureStatus] = FEATURES) -> dict
 
 
 def feature_matrix_payload() -> dict:
-    return {
-        "features": [row.to_dict() for row in FEATURES],
-        "counts_by_status": feature_counts_by_status(),
-        "counts_by_risk": feature_counts_by_risk(),
-        "recommended_next_milestones": list(RECOMMENDED_NEXT_MILESTONES),
-    }
+    return {"features": [row.to_dict() for row in FEATURES], "counts_by_status": feature_counts_by_status(), "counts_by_risk": feature_counts_by_risk(), "recommended_next_milestones": list(RECOMMENDED_NEXT_MILESTONES)}
