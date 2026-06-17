@@ -71,8 +71,9 @@ def _copyable_files(slot_path: Path) -> list[Path]:
     return files
 
 
-def build_manifest_entry(slot: SaveSlot, description: str = "Imported real Fallout 1 save fixture") -> dict[str, Any]:
+def build_manifest_entry(slot: SaveSlot, description: str = "Imported real Fallout 1 save fixture", artifact_names: set[str] | None = None) -> dict[str, Any]:
     sd = slot.save_dat
+    artifacts = [artifact for artifact in slot.artifacts if artifact_names is None or artifact.name in artifact_names]
     return {
         "description": description,
         "save_dat_size": len(sd.data),
@@ -83,8 +84,8 @@ def build_manifest_entry(slot: SaveSlot, description: str = "Imported real Fallo
         "function6_start": _hex(sd.critter_stats.start),
         "inventory_count": sd.player_object.inventory_count,
         "kill_count_count": sd.kill_count_count,
-        "expected_artifacts": [artifact.name for artifact in slot.artifacts],
-        "expected_artifact_kinds": {artifact.name: artifact.kind for artifact in slot.artifacts},
+        "expected_artifacts": [artifact.name for artifact in artifacts],
+        "expected_artifact_kinds": {artifact.name: artifact.kind for artifact in artifacts},
     }
 
 
@@ -97,11 +98,12 @@ def fixture_import_plan(source: str | Path, fixture_root: str | Path, name: str,
     if dest.exists() and not force:
         issues.append("destination fixture already exists; use --force to replace it")
     files = _copyable_files(src_slot)
-    names = {file.name.upper() for file in files}
-    if "SAVE.DAT" not in names:
+    names = {file.name for file in files}
+    if "SAVE.DAT" not in {name.upper() for name in names}:
         issues.append("SAVE.DAT is not in copy plan")
+    artifact_names = {name for name in names if name.upper() != "SAVE.DAT"}
     verify_issues = slot.save_dat.verify()
-    entry = build_manifest_entry(slot, description=description)
+    entry = build_manifest_entry(slot, description=description, artifact_names=artifact_names)
     return FixtureImportPlan(src_slot, root, name, dest, entry, [file.name for file in files], verify_issues, issues)
 
 
