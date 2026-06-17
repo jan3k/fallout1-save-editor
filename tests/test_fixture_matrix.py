@@ -52,6 +52,12 @@ class FixtureMatrixTests(unittest.TestCase):
                 if "expected_artifact_kinds" in expected:
                     actual_kinds = {artifact.name: artifact.kind for artifact in slot.artifacts}
                     self.assertEqual(actual_kinds, expected["expected_artifact_kinds"])
+                if "expected_raw_blocks" in expected:
+                    for index, row in expected["expected_raw_blocks"].items():
+                        block = sd.blocks[int(index)]
+                        self.assertEqual(block.name, row["name"])
+                        self.assertEqual(block.start, _hex_or_int(row["start"]))
+                        self.assertEqual(block.end, _hex_or_int(row["end"]))
                 if "expected_inventory" in expected:
                     for row in expected["expected_inventory"]:
                         item = sd.player_object.inventory[int(row["index"])]
