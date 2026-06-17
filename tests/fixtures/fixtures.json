@@ -14,6 +14,13 @@
       "AUTOMAP.SAV": "AUTOMAP_SAV",
       "V13ENT.SAV": "MAP_SAV"
     },
+    "expected_raw_blocks": {
+      "2": {"name": "scripts_game_save_1", "start": "0x7567", "end": "0x7BDE"},
+      "3": {"name": "maps", "start": "0x7BDE", "end": "0x8255"},
+      "4": {"name": "scripts_game_save_2", "start": "0x8255", "end": "0x88CC"},
+      "20": {"name": "worldmap", "start": "0x9009", "end": "0x94FB"},
+      "25": {"name": "interface", "start": "0x94FB", "end": "0x950B"}
+    },
     "expected_inventory": [
       {"index": 0, "offset": "0x894C", "pid": 4, "size": "0x64", "quantity": 1, "known_pid": true, "type": "weapon"},
       {"index": 1, "offset": "0x89B0", "pid": 8, "size": "0x64", "quantity": 1, "known_pid": true, "type": "weapon"},
