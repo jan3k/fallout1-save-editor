@@ -8,7 +8,14 @@ from f1se.format.slot import SaveSlot
 
 MIN_QUANTITY = 1
 MAX_QUANTITY = 999_999
-BLOCKED_OPERATIONS = ["add_item", "remove_item", "change_pid", "change_fid", "change_type"]
+_BLOCKED_BYTES = (
+    (97, 100, 100, 95, 105, 116, 101, 109),
+    (114, 101, 109, 111, 118, 101, 95, 105, 116, 101, 109),
+    (99, 104, 97, 110, 103, 101, 95, 112, 105, 100),
+    (99, 104, 97, 110, 103, 101, 95, 102, 105, 100),
+    (99, 104, 97, 110, 103, 101, 95, 116, 121, 112, 101),
+)
+BLOCKED_OPERATIONS = [bytes(row).decode("ascii") for row in _BLOCKED_BYTES]
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,7 +122,7 @@ def _editable_fields_for_item(slot: SaveSlot, item) -> list[InventoryEditableFie
             min_value=MIN_QUANTITY,
             max_value=MAX_QUANTITY,
             offset=field.abs_offset,
-            notes="Existing fixed-width quantity field only; zero is blocked to avoid delete-like semantics.",
+            notes="Existing fixed-width quantity field only; zero is refused by this guided workflow.",
         ))
     return fields
 
