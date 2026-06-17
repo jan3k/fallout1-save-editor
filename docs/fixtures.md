@@ -7,7 +7,7 @@ The fixture matrix exists to prove that `f1se` can parse, validate and round-tri
 ## Directory layout
 
 ```text
-测试/fixtures/
+tests/fixtures/
   fixtures.json
   SLOT01/
     SAVE.DAT
