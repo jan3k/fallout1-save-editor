@@ -498,14 +498,45 @@ class SaveDat:
         if len(self.blocks) != 27:
             issues.append(f"expected 27 function blocks, got {len(self.blocks)}")
         prev = HEADER_SIZE
-        for b in self.blocks:
-            if b.start < 0 or b.end < b.start or b.end > len(self.data):
-                issues.append(f"block {b.index} has invalid bounds")
-            if b.index > 0 and b.start < prev:
-                issues.append(f"block {b.index} overlaps previous block")
-            prev = max(prev, b.end)
+        for expected_index, block in enumerate(self.blocks):
+            if block.index != expected_index:
+                issues.append(f"block order mismatch at position {expected_index}: got index {block.index}")
+            elif expected_index < len(FUNCTION_NAMES) and block.name != FUNCTION_NAMES[expected_index]:
+                issues.append(f"block {block.index} name mismatch: {block.name!r} != {FUNCTION_NAMES[expected_index]!r}")
+            if block.start < 0 or block.end < block.start or block.end > len(self.data):
+                issues.append(f"block {block.index} has invalid bounds")
+            if block.start < prev:
+                issues.append(f"block {block.index} overlaps previous block")
+            prev = max(prev, block.end)
+        if self.blocks and self.blocks[-1].end != len(self.data):
+            issues.append("last function block does not end at EOF")
+        if not (0 <= self.player_object.start < self.critter_stats.start <= len(self.data)):
+            issues.append("Function 5/6 anchor order is invalid")
+        if bytes(self.data[self.player_object.start:self.player_object.start + 4]) != b"\x00\x00FP":
+            issues.append("Function 5 FP signature mismatch")
+        if self.player_object.function6_start != self.critter_stats.start:
+            issues.append("Function 5 embedded Function 6 anchor does not match parsed Function 6 start")
+        if self.critter_stats.end - self.critter_stats.start != FUNCTION6_SIZE:
+            issues.append(f"Function 6 size mismatch: got 0x{self.critter_stats.end - self.critter_stats.start:X}")
+        if self.critter_stats.end > len(self.data):
+            issues.append("Function 6 extends beyond EOF")
         if self.player_object.inventory_count != len(self.player_object.inventory):
             issues.append("inventory count mismatch")
+        for item in self.player_object.inventory:
+            if item.start < self.player_object.item_list_start or item.end > self.critter_stats.start or item.end < item.start:
+                issues.append(f"inventory item {item.index} has invalid bounds")
+        try:
+            tags = _ints(self.data, self.tag_skills_start, 4)
+            if not _valid_tag_skills(tags):
+                issues.append(f"invalid tag skill values: {tags!r}")
+        except Exception as exc:
+            issues.append(f"tag skills: {exc}")
+        if not _looks_like_options(self.data, self.options_start):
+            issues.append("options block anchor failed plausibility checks")
+        try:
+            self._validate_cross_field_state(warn_only=False)
+        except Exception as exc:
+            issues.append(f"cross-field validation: {exc}")
         for name, field in self.fields.items():
             if field.writable and field.type_name == "i32" and field.validator is not None:
                 try:
@@ -516,9 +547,12 @@ class SaveDat:
                 except Exception as exc:
                     issues.append(f"field {name}: {exc}")
         # Round-trip safety invariant: parsing without edits keeps bytes equal.
-        reparsed = SaveDat.from_bytes(bytes(self.data), self.path)
-        if bytes(reparsed.data) != bytes(self.data):
-            issues.append("round-trip parse changed bytes")
+        try:
+            reparsed = SaveDat.from_bytes(bytes(self.data), self.path)
+            if bytes(reparsed.data) != bytes(self.data):
+                issues.append("round-trip parse changed bytes")
+        except Exception as exc:
+            issues.append(f"round-trip reparse failed: {exc}")
         return issues
 
     @classmethod
