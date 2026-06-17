@@ -16,6 +16,7 @@ from f1se.format.slot import ARTIFACT_MAP_SAV, SaveSlot
 from f1se.format.save_dat import SaveDat
 from f1se.io.atomic_write import atomic_write_bytes
 from f1se.io.backup import backup_slot
+from f1se.project.features import feature_matrix_payload as project_feature_matrix_payload
 from f1se.schema.fields import Diff, Field
 
 
@@ -176,6 +177,9 @@ class SaveEditorSession:
             if artifact.kind == ARTIFACT_MAP_SAV:
                 rows.append(scan_map_objects(self.slot_path / artifact.name).to_dict())
         return {"slot_path": str(self.slot_path), "maps": rows}
+
+    def feature_matrix_payload(self) -> dict[str, Any]:
+        return project_feature_matrix_payload()
 
     def validation_summary(self) -> dict[str, Any]:
         issues = self.validation_issues()
