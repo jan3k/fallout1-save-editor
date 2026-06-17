@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURE = ROOT / "tests" / "fixtures" / "SLOT01"
+FIXTURE_ROOT = ROOT / "tests" / "fixtures"
+FIXTURE = FIXTURE_ROOT / "SLOT01"
+MANIFEST = FIXTURE_ROOT / "fixtures.json"
 
 
 class FixtureToolsTests(unittest.TestCase):
@@ -36,7 +40,39 @@ class FixtureToolsTests(unittest.TestCase):
         self.assertEqual(entry["inventory_count"], 5)
         self.assertEqual(entry["kill_count_count"], 15)
         self.assertEqual(set(entry["expected_artifacts"]), {"AUTOMAP.SAV", "V13ENT.SAV"})
+        self.assertEqual(entry["expected_artifact_kinds"], {"AUTOMAP.SAV": "AUTOMAP_SAV", "V13ENT.SAV": "MAP_SAV"})
         self.assertNotIn("verify_issues", entry)
+
+    def test_fixture_check_json_reports_ok(self) -> None:
+        cp = self.run_cli("fixture-check", str(FIXTURE_ROOT), "--json")
+        self.assertEqual(cp.returncode, 0, cp.stderr)
+        payload = json.loads(cp.stdout)
+        self.assertTrue(payload["ok"])
+        self.assertIn("SLOT01", payload["slots"])
+        self.assertTrue(payload["slots"]["SLOT01"]["ok"])
+
+    def test_fixture_check_detects_missing_slot(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "fixtures.json").write_text(MANIFEST.read_text(encoding="utf-8"), encoding="utf-8")
+            cp = self.run_cli("fixture-check", str(root), "--json")
+            self.assertNotEqual(cp.returncode, 0)
+            payload = json.loads(cp.stdout)
+            self.assertFalse(payload["ok"])
+            self.assertIn("slot directory missing", payload["slots"]["SLOT01"]["issues"])
+
+    def test_fixture_check_detects_manifest_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            shutil.copytree(FIXTURE, root / "SLOT01")
+            manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+            manifest["SLOT01"]["function5_start"] = "0xDEAD"
+            (root / "fixtures.json").write_text(json.dumps(manifest), encoding="utf-8")
+            cp = self.run_cli("fixture-check", str(root), "--json")
+            self.assertNotEqual(cp.returncode, 0)
+            payload = json.loads(cp.stdout)
+            self.assertFalse(payload["ok"])
+            self.assertTrue(any("function5_start mismatch" in issue for issue in payload["slots"]["SLOT01"]["issues"]))
 
     def test_inventory_json_command_exposes_metadata(self) -> None:
         cp = self.run_cli("inventory", str(FIXTURE), "--json")
