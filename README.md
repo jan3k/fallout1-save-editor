@@ -12,7 +12,7 @@ Implemented:
 - SAFE fixed-width editing for player stats, S.P.E.C.I.A.L., skills, traits, kills, PC stats and existing inventory quantities/ammo fields;
 - guided quantity workflow for existing inventory rows;
 - ADVANCED fixed-width editing for derived stats, raw perk ranks and selected lower-level fields;
-- read-only inventory metadata, artifact fingerprints, raw block inspection, global-state candidate scan and map `.SAV` scan;
+- read-only inventory metadata, artifact fingerprints, raw block inspection, global-state candidate scan, global labels and map `.SAV` scan;
 - CLI and guided Tkinter/ttk GUI with preview diff, backup, atomic write, raw-write experimental gate and ADVANCED acknowledgement;
 - fixture matrix, fixture-check and no-change byte-identical round-trip tests;
 - F12se-oriented feature matrix and roadmap.
@@ -38,6 +38,8 @@ f1se inventory-set-quantity /path/to/SLOT --index 3 --quantity 20 --write
 f1se artifacts /path/to/SLOT --json
 f1se raw-blocks /path/to/SLOT --json
 f1se globals-scan /path/to/SLOT --json
+f1se global-labels --json
+f1se global-labels --block 2 --json
 f1se map-scan /path/to/SLOT --json
 f1se features --json
 f1se features --category inventory --json
@@ -74,6 +76,7 @@ See:
 - `docs/source_alignment.md`
 - `docs/gui_workflow.md`
 - `docs/inventory_workflow.md`
+- `docs/global_labels.md`
 
 ## Tests
 
