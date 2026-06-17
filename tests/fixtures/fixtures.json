@@ -9,6 +9,17 @@
     "function6_start": "0x8B38",
     "inventory_count": 5,
     "kill_count_count": 15,
-    "expected_artifacts": ["AUTOMAP.SAV", "V13ENT.SAV"]
+    "expected_artifacts": ["AUTOMAP.SAV", "V13ENT.SAV"],
+    "expected_artifact_kinds": {
+      "AUTOMAP.SAV": "AUTOMAP_SAV",
+      "V13ENT.SAV": "MAP_SAV"
+    },
+    "expected_inventory": [
+      {"index": 0, "offset": "0x894C", "pid": 4, "size": "0x64", "quantity": 1, "known_pid": true, "type": "weapon"},
+      {"index": 1, "offset": "0x89B0", "pid": 8, "size": "0x64", "quantity": 1, "known_pid": true, "type": "weapon"},
+      {"index": 2, "offset": "0x8A14", "pid": 29, "size": "0x60", "quantity": 3, "known_pid": true, "type": "ammo"},
+      {"index": 3, "offset": "0x8A74", "pid": 40, "size": "0x5C", "quantity": 6, "known_pid": true, "type": "drug"},
+      {"index": 4, "offset": "0x8AD0", "pid": 79, "size": "0x64", "quantity": 2, "known_pid": true, "type": "weapon"}
+    ]
   }
 }

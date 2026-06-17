@@ -51,12 +51,18 @@ Each key in `fixtures.json` is a slot directory under `tests/fixtures`:
     "function6_start": "0x8B38",
     "inventory_count": 5,
     "kill_count_count": 15,
-    "expected_artifacts": ["AUTOMAP.SAV", "V13ENT.SAV"]
+    "expected_artifacts": ["AUTOMAP.SAV", "V13ENT.SAV"],
+    "expected_artifact_kinds": {
+      "AUTOMAP.SAV": "AUTOMAP_SAV",
+      "V13ENT.SAV": "MAP_SAV"
+    }
   }
 }
 ```
 
 Hex strings are accepted for offsets. Counts are decimal integers.
+
+Optional `expected_inventory` rows can assert existing inventory offsets, PIDs, sizes and quantities when the fixture is intended to protect inventory parser behaviour.
 
 ## Generating a manifest entry
 
@@ -79,13 +85,25 @@ PYTHONPATH=src python3 -m f1se fixture-snapshot tests/fixtures/SLOT01 \
 
 The command does not modify `fixtures.json`; copy the generated entry manually after reviewing it.
 
+## Checking a fixture corpus
+
+Use `fixture-check` to validate `fixtures.json` against real slot directories:
+
+```bash
+PYTHONPATH=src python3 -m f1se fixture-check tests/fixtures
+PYTHONPATH=src python3 -m f1se fixture-check tests/fixtures --json
+```
+
+The command checks slot existence, `SAVE.DAT`, source anchors, header values, artifact names, artifact kinds, optional inventory rows and `SaveDat.verify()`.
+
 ## Adding a fixture
 
 1. Add a complete real save slot directory under `tests/fixtures`.
 2. Keep `SAVE.DAT` plus all slot artifacts that belong to the save, for example `.SAV` map files and `AUTOMAP.SAV`.
 3. Run `f1se fixture-snapshot tests/fixtures/<SLOT> --name <SLOT> --json`.
 4. Copy the generated manifest entry into `tests/fixtures/fixtures.json`.
-5. Run:
+5. Run `f1se fixture-check tests/fixtures --json`.
+6. Run:
 
 ```bash
 PYTHONPATH=src python3 -m unittest discover -s tests -v
@@ -98,6 +116,8 @@ The fixture matrix checks:
 - Function 5 and Function 6 anchors match the manifest;
 - inventory count and kill-count count match the manifest;
 - slot artifacts match the manifest;
+- artifact kinds match the manifest;
+- optional expected inventory rows match parser output;
 - `verify()` returns no issues;
 - no-change parse is byte-identical;
 - all 27 source-order function blocks are monotonic and stay inside `SAVE.DAT`.

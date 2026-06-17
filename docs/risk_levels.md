@@ -2,7 +2,7 @@
 
 Risk levels describe write safety. They are independent from parser visibility: a field can be visible in the UI and still remain `ADVANCED`, `EXPERIMENTAL` or raw-preserved.
 
-Read-only metadata, such as known item/proto names and inventory parser confidence, does not change a field's write safety.
+Read-only metadata, such as known item/proto names, inventory parser confidence and slot artifact fingerprints, does not change a field or file's write safety.
 
 ## SAFE
 
@@ -42,7 +42,8 @@ Operations that can alter structure length or object identity:
 - changing PID/FID/type,
 - changing object scripts/local vars,
 - changing queue entries,
-- semantic worldmap/party/map-object editing.
+- semantic worldmap/party/map-object editing,
+- `.SAV`/`AUTOMAP.SAV` rebuild or semantic write.
 
 High-level `EXPERIMENTAL` operations are intentionally not implemented until there are enough real fixtures and source-aligned parser tests to protect round-trip behaviour.
 

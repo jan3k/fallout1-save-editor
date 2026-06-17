@@ -16,6 +16,10 @@ The registry is not a serializer. It must not be used to rebuild `SAVE.DAT` from
 
 `src/f1se/schema/items.py` contains read-only item metadata used by the parser and CLI. It is display and inference data only, not a serializer.
 
+## Slot artifacts
+
+`src/f1se/format/automap_sav.py` and `src/f1se/format/map_sav.py` provide read-only raw fingerprints for `AUTOMAP.SAV` and map `.SAV` files. These modules intentionally avoid semantic map writes and do not rebuild artifact files.
+
 ## Constants used in the editor
 
 - `PRIMARY_STAT_MIN = 1`

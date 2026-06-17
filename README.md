@@ -9,6 +9,7 @@ The editor patches fixed-width fields in-place and preserves unknown bytes exact
 Implemented:
 
 - full slot discovery for `SAVE.DAT`, `.SAV`, `AUTOMAP.SAV` fingerprints;
+- typed read-only slot artifact classification for `AUTOMAP.SAV`, map `.SAV`, and unknown files;
 - `SAVE.DAT` header parser;
 - source-aligned registry for the 27 Fallout 1 load/save handlers;
 - dynamic `Function 5` detection by `00 00 46 50` / `FP`;
@@ -38,7 +39,9 @@ Implemented:
 - no-change round-trip tests;
 - fixture matrix for multi-save parser regression;
 - fixture snapshot CLI for generating manifest entries;
+- fixture check CLI for validating fixture manifests;
 - `f1se inventory` read-only inventory/proto view;
+- `f1se artifacts` read-only slot artifact view;
 - `f1se gui` Tkinter/ttk GUI over the same parser/writer.
 
 Preserved raw, not fully semantic yet:
@@ -74,7 +77,11 @@ f1se dump /path/to/SLOT --json
 f1se fields /path/to/SLOT
 f1se inventory /path/to/SLOT
 f1se inventory /path/to/SLOT --json
+f1se artifacts /path/to/SLOT
+f1se artifacts /path/to/SLOT --json
 f1se fixture-snapshot /path/to/SLOT --name SLOT02_AFTER_COMBAT --json
+f1se fixture-check tests/fixtures
+f1se fixture-check tests/fixtures --json
 f1se get /path/to/SLOT player.base_strength
 f1se set /path/to/SLOT player.base_strength 10 --dry-run
 f1se set /path/to/SLOT player.base_strength 10 --write
@@ -177,6 +184,12 @@ Generate a manifest entry for a real slot with:
 f1se fixture-snapshot /path/to/SLOT --name SLOT02_AFTER_COMBAT --json
 ```
 
+Validate the manifest against the fixture corpus with:
+
+```bash
+f1se fixture-check tests/fixtures --json
+```
+
 See `docs/fixtures.md` for the fixture workflow. Do not update fixture offsets blindly: if an anchor moves, the parser change must explain why the new anchor is more correct.
 
 ## Inventory metadata
@@ -184,6 +197,12 @@ See `docs/fixtures.md` for the fixture workflow. Do not update fixture offsets b
 `f1se inventory SLOT --json` exposes read-only item metadata, parser confidence and whether each PID is known. A known PID only improves display and size inference; it does **not** make PID/FID/type mutation safe.
 
 See `docs/inventory.md` for details.
+
+## Artifacts
+
+`f1se artifacts SLOT --json` exposes read-only fingerprints for non-`SAVE.DAT` slot files. `AUTOMAP.SAV` and map `.SAV` files are classified but not semantically edited.
+
+See `docs/artifacts.md` for details.
 
 ## Tests
 
