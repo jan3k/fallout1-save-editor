@@ -12,6 +12,8 @@ Implemented:
 - typed read-only slot artifact classification for `AUTOMAP.SAV`, map `.SAV`, and unknown files;
 - `SAVE.DAT` header parser;
 - source-aligned registry for the 27 Fallout 1 load/save handlers;
+- read-only raw block structural inspection;
+- read-only global/script-state candidate discovery;
 - dynamic `Function 5` detection by `00 00 46 50` / `FP`;
 - dynamic inventory item-size inference for Function 5;
 - read-only item/proto metadata for known Fallout 1 PIDs;
@@ -79,6 +81,10 @@ f1se inventory /path/to/SLOT
 f1se inventory /path/to/SLOT --json
 f1se artifacts /path/to/SLOT
 f1se artifacts /path/to/SLOT --json
+f1se raw-blocks /path/to/SLOT
+f1se raw-blocks /path/to/SLOT --json
+f1se globals-scan /path/to/SLOT
+f1se globals-scan /path/to/SLOT --json
 f1se fixture-snapshot /path/to/SLOT --name SLOT02_AFTER_COMBAT --json
 f1se fixture-check tests/fixtures
 f1se fixture-check tests/fixtures --json
@@ -203,6 +209,12 @@ See `docs/inventory.md` for details.
 `f1se artifacts SLOT --json` exposes read-only fingerprints for non-`SAVE.DAT` slot files. `AUTOMAP.SAV` and map `.SAV` files are classified but not semantically edited.
 
 See `docs/artifacts.md` for details.
+
+## Raw blocks and global state discovery
+
+`f1se raw-blocks SLOT --json` exposes structural metadata for preserved raw blocks. `f1se globals-scan SLOT --json` reports low-confidence global/script-state candidates without assigning quest names or enabling writes.
+
+See `docs/raw_blocks.md` and `docs/global_state.md` for details.
 
 ## Tests
 
