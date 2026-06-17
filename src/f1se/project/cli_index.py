@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 PUBLIC_COMMANDS = (
+    "commands",
     "inspect",
     "dump",
     "fields",
@@ -32,6 +33,7 @@ PUBLIC_COMMANDS = (
 )
 
 JSON_COMMANDS = {
+    "commands",
     "dump",
     "inventory",
     "inventory-editable",
