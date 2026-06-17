@@ -55,6 +55,9 @@ Each key in `fixtures.json` is a slot directory under `tests/fixtures`:
     "expected_artifact_kinds": {
       "AUTOMAP.SAV": "AUTOMAP_SAV",
       "V13ENT.SAV": "MAP_SAV"
+    },
+    "expected_raw_blocks": {
+      "2": {"name": "scripts_game_save_1", "start": "0x7567", "end": "0x7BDE"}
     }
   }
 }
@@ -63,6 +66,8 @@ Each key in `fixtures.json` is a slot directory under `tests/fixtures`:
 Hex strings are accepted for offsets. Counts are decimal integers.
 
 Optional `expected_inventory` rows can assert existing inventory offsets, PIDs, sizes and quantities when the fixture is intended to protect inventory parser behaviour.
+
+Optional `expected_raw_blocks` entries can assert raw block names and offset ranges. Use them to lock stable parser anchors, not to claim semantic meaning for quests or globals.
 
 ## Generating a manifest entry
 
@@ -94,7 +99,7 @@ PYTHONPATH=src python3 -m f1se fixture-check tests/fixtures
 PYTHONPATH=src python3 -m f1se fixture-check tests/fixtures --json
 ```
 
-The command checks slot existence, `SAVE.DAT`, source anchors, header values, artifact names, artifact kinds, optional inventory rows and `SaveDat.verify()`.
+The command checks slot existence, `SAVE.DAT`, source anchors, header values, artifact names, artifact kinds, optional raw block anchors, optional inventory rows and `SaveDat.verify()`.
 
 ## Adding a fixture
 
@@ -117,6 +122,7 @@ The fixture matrix checks:
 - inventory count and kill-count count match the manifest;
 - slot artifacts match the manifest;
 - artifact kinds match the manifest;
+- optional expected raw block anchors match parser output;
 - optional expected inventory rows match parser output;
 - `verify()` returns no issues;
 - no-change parse is byte-identical;
