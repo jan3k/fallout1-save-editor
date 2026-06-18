@@ -35,6 +35,11 @@ CONTRACTS: tuple[JsonPayloadContract, ...] = (
     C("json_contracts", "json-contracts --json", ("contracts", "count"), (), True, "JSON contract catalog."),
     C("release_audit", "release-audit --json", ("status", "checks", "summary", "read_only"), (), True, "Release audit payload."),
     C("smoke", "smoke --json", ("ok", "checks", "commands_count", "contracts_count", "audit_status", "read_only"), (), True, "Smoke payload."),
+    C("detect", "detect SLOT --json", ("game_kind", "confidence", "signature", "version", "reason", "read_only"), ("profile",), True, "Game detection payload for Fallout 1, Fallout 2 or unknown saves."),
+    C("compatibility", "compatibility --json", ("games", "status_values", "read_only"), ("notes",), True, "Game compatibility matrix."),
+    C("fallout2_dump", "dump SLOT --game fallout2 --json", ("game_kind", "path", "size", "sha256", "header", "metadata", "sections", "fields", "inventory", "warnings", "read_only", "parser_status"), ("inventory_count", "size_hex"), True, "Fallout 2 read-only dump payload."),
+    C("fallout2_fields", "fields SLOT --game fallout2 --json", ("game_kind", "path", "fields", "warnings", "read_only", "parser_status"), (), True, "Fallout 2 read-only field schema payload."),
+    C("fallout2_inventory", "inventory SLOT --game fallout2 --json", ("game_kind", "slot_path", "inventory_count", "inventory", "blocked_operations", "warnings", "read_only"), (), True, "Fallout 2 read-only inventory payload."),
     C("inventory_editable", "inventory-editable SLOT --json", ("slot_path", "inventory_count", "items", "blocked_operations", "quantity_range"), (), True, "Existing inventory workflow view."),
     C("map_summary", "map-summary SLOT --json", ("slot_path", "maps"), (), True, "Read-only map artifact summary."),
     C("save_diff", "diff LEFT RIGHT --json", ("left_slot", "right_slot", "field_diffs", "artifact_diffs", "block_diffs", "summary", "read_only"), (), True, "Read-only slot comparison."),
@@ -51,6 +56,11 @@ CONTRACT_FIELD_TYPES: dict[str, dict[str, str]] = {
     "json_contracts": {"contracts": "list", "count": "int"},
     "release_audit": {"status": "str", "checks": "list", "summary": "dict", "read_only": "bool"},
     "smoke": {"ok": "bool", "checks": "list", "commands_count": "int", "contracts_count": "int", "audit_status": "str", "read_only": "bool"},
+    "detect": {"game_kind": "str", "confidence": "int", "signature": "str", "version": "str_or_none", "reason": "str", "read_only": "bool", "profile": "dict"},
+    "compatibility": {"games": "dict", "status_values": "list", "read_only": "bool", "notes": "list"},
+    "fallout2_dump": {"game_kind": "str", "path": "str", "size": "int", "size_hex": "str", "sha256": "str", "header": "dict", "metadata": "dict", "sections": "dict", "fields": "dict", "inventory": "list", "inventory_count": "int", "warnings": "list", "read_only": "bool", "parser_status": "str"},
+    "fallout2_fields": {"game_kind": "str", "path": "str", "fields": "dict", "warnings": "list", "read_only": "bool", "parser_status": "str"},
+    "fallout2_inventory": {"game_kind": "str", "slot_path": "str", "inventory_count": "int", "inventory": "list", "blocked_operations": "list", "warnings": "list", "read_only": "bool"},
     "inventory_editable": {"slot_path": "str", "inventory_count": "int", "items": "list", "blocked_operations": "list", "quantity_range": "dict"},
     "map_summary": {"slot_path": "str", "maps": "list"},
     "save_diff": {"left_slot": "str", "right_slot": "str", "field_diffs": "list", "artifact_diffs": "list", "block_diffs": "list", "summary": "dict", "read_only": "bool"},
@@ -89,6 +99,8 @@ def validate_payload_keys(payload: dict[str, Any], contract_id: str) -> list[str
 def _matches_type(value: Any, type_name: str) -> bool:
     if type_name == "str":
         return isinstance(value, str)
+    if type_name == "str_or_none":
+        return value is None or isinstance(value, str)
     if type_name == "int":
         return isinstance(value, int) and not isinstance(value, bool)
     if type_name == "bool":
