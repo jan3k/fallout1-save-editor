@@ -21,6 +21,7 @@ class JsonPayloadContract:
             "optional_keys": list(self.optional_keys),
             "read_only": self.read_only,
             "notes": self.notes,
+            "field_types": expected_payload_types(self.id),
         }
 
 
@@ -40,6 +41,22 @@ CONTRACTS: tuple[JsonPayloadContract, ...] = (
     JsonPayloadContract("fixture_status", "fixture-status FIXTURES --json", ("fixture_root", "ok", "issues", "manifest_count"), ("present", "recommended", "missing_recommended", "coverage_categories", "coverage_score"), True, "Fixture corpus status."),
 )
 
+CONTRACT_FIELD_TYPES: dict[str, dict[str, str]] = {
+    "features": {"features": "list", "counts_by_status": "dict", "counts_by_risk": "dict", "recommended_next_milestones": "list"},
+    "commands": {"commands": "list", "count": "int"},
+    "json_contracts": {"contracts": "list", "count": "int"},
+    "release_audit": {"status": "str", "checks": "list", "summary": "dict", "read_only": "bool"},
+    "smoke": {"ok": "bool", "checks": "list", "commands_count": "int", "contracts_count": "int", "audit_status": "str", "read_only": "bool"},
+    "inventory_editable": {"slot_path": "str", "inventory_count": "int", "items": "list", "blocked_operations": "list", "quantity_range": "dict"},
+    "map_summary": {"slot_path": "str", "maps": "list"},
+    "save_diff": {"left_slot": "str", "right_slot": "str", "field_diffs": "list", "artifact_diffs": "list", "block_diffs": "list", "summary": "dict", "read_only": "bool"},
+    "fixture_doctor": {"fixture_root": "str", "ok": "bool", "issues": "list", "warnings": "list", "findings": "list", "checked_slots": "list", "status": "dict"},
+    "fixture_coverage": {"fixture_root": "str", "status": "dict", "recommended": "list", "expansion_plan": "list", "coverage_categories": "list", "missing_categories": "list", "summary": "dict", "read_only": "bool"},
+    "global_labels": {"labels": "list", "count": "int", "block_index": "dict", "read_only": "bool", "confidence_values": "list"},
+    "globals_scan": {"slot_path": "str", "candidates": "list"},
+    "fixture_status": {"fixture_root": "str", "ok": "bool", "issues": "list", "manifest_count": "int", "present": "list", "recommended": "list", "missing_recommended": "list", "coverage_categories": "list", "coverage_score": "number"},
+}
+
 
 def contract_ids() -> list[str]:
     return [contract.id for contract in CONTRACTS]
@@ -52,6 +69,10 @@ def get_contract(contract_id: str) -> JsonPayloadContract:
     raise KeyError(contract_id)
 
 
+def expected_payload_types(contract_id: str) -> dict[str, str]:
+    return dict(CONTRACT_FIELD_TYPES.get(contract_id, {}))
+
+
 def contracts_payload() -> dict[str, Any]:
     return {"contracts": [contract.to_dict() for contract in CONTRACTS], "count": len(CONTRACTS)}
 
@@ -59,3 +80,29 @@ def contracts_payload() -> dict[str, Any]:
 def validate_payload_keys(payload: dict[str, Any], contract_id: str) -> list[str]:
     contract = get_contract(contract_id)
     return [key for key in contract.required_keys if key not in payload]
+
+
+def _matches_type(value: Any, type_name: str) -> bool:
+    if type_name == "str":
+        return isinstance(value, str)
+    if type_name == "int":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if type_name == "bool":
+        return isinstance(value, bool)
+    if type_name == "list":
+        return isinstance(value, list)
+    if type_name == "dict":
+        return isinstance(value, dict)
+    if type_name == "number":
+        return (isinstance(value, int | float) and not isinstance(value, bool))
+    raise ValueError(f"unknown JSON contract type: {type_name}")
+
+
+def validate_payload_types(payload: dict[str, Any], contract_id: str) -> list[str]:
+    issues: list[str] = []
+    for key, type_name in expected_payload_types(contract_id).items():
+        if key not in payload:
+            continue
+        if not _matches_type(payload[key], type_name):
+            issues.append(f"{key}: expected {type_name}, got {type(payload[key]).__name__}")
+    return issues
