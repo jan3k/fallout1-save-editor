@@ -9,6 +9,7 @@ from pathlib import Path
 
 from f1se.format.fallout2.save_dat import Fallout2SaveDat
 from f1se.format.fallout2.synthetic import build_minimal_fallout2_save
+from f1se.gui.fo2_model import Fallout2GuiSession
 from f1se.project.compatibility import compatibility_payload
 from f1se.project.game_detection import detect_game
 from f1se.project.game_profile import GameKind
@@ -63,6 +64,20 @@ class Fallout2ReadOnlyTests(unittest.TestCase):
         self.assertEqual(save.fields["pc.level"].value, 3)
         self.assertEqual(save.player_object.inventory_count, 0)
 
+    def test_gui_session_is_read_only(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            slot = self.write_slot(Path(tmp))
+            session = Fallout2GuiSession(slot)
+            self.assertEqual(session.game_kind, GameKind.FALLOUT2)
+            self.assertTrue(session.read_only)
+            self.assertEqual(session.summary()["player_name"], "Chosen One")
+            self.assertEqual(session.preview_patch({}), [])
+            self.assertEqual(session.raw_read(0, 4), b"FALL")
+            with self.assertRaises(ValueError):
+                session.preview_patch({"pc.level": 4})
+            with self.assertRaises(ValueError):
+                session.raw_preview(0, b"\x00")
+
     def test_cli_payloads_match_contracts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             slot = self.write_slot(Path(tmp))
@@ -88,6 +103,7 @@ class Fallout2ReadOnlyTests(unittest.TestCase):
         matrix = compatibility_payload()
         self.assertEqual(matrix["games"]["fallout2"]["set"]["status"], "not_supported")
         self.assertEqual(matrix["games"]["fallout2"]["inventory"]["status"], "read_only")
+        self.assertEqual(matrix["games"]["fallout2"]["gui"]["status"], "read_only")
 
 
 if __name__ == "__main__":
