@@ -16,6 +16,13 @@ CATEGORY_TARGETS: tuple[str, ...] = (
     "party",
     "late_game",
     "negative",
+    "fallout1.baseline",
+    "fallout2.baseline",
+    "fallout2.inventory",
+    "fallout2.perks",
+    "fallout2.status_effects",
+    "fallout2.late_game",
+    "fallout2.negative",
 )
 
 
@@ -38,6 +45,23 @@ def fixture_coverage(fixture_root: str | Path) -> dict[str, Any]:
     status = fixture_status(fixture_root)
     present = set(status.get("present", []))
     categories = set(status.get("coverage_categories", []))
+    if "baseline" in categories:
+        categories.add("fallout1.baseline")
+    for name in present:
+        low = name.lower()
+        if "fallout2" in low or low.startswith("fo2") or low.startswith("f2"):
+            if "baseline" in low or "base" in low:
+                categories.add("fallout2.baseline")
+            if "inventory" in low:
+                categories.add("fallout2.inventory")
+            if "perk" in low:
+                categories.add("fallout2.perks")
+            if "poison" in low or "rad" in low or "crippled" in low or "status" in low:
+                categories.add("fallout2.status_effects")
+            if "late" in low:
+                categories.add("fallout2.late_game")
+            if "negative" in low or "corrupt" in low:
+                categories.add("fallout2.negative")
     recommended = recommended_fixture_plan()
     rows: list[dict[str, Any]] = []
     expansion_plan: list[dict[str, Any]] = []
