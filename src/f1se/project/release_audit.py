@@ -4,7 +4,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from f1se.project.cli_index import JSON_COMMANDS, PUBLIC_COMMANDS
+from f1se.project.compatibility import compatibility_payload
 from f1se.project.features import FEATURES
+from f1se.project.fixture_coverage import CATEGORY_TARGETS
 from f1se.project.json_contracts import CONTRACTS, expected_payload_types
 from f1se.project.json_nested_contracts import expected_nested_payload_types
 
@@ -13,6 +15,11 @@ EXPECTED_CONTRACT_COVERAGE: dict[str, dict[str, bool | str]] = {
     "json_contracts": {"command": "json-contracts", "types": True, "nested": False},
     "release_audit": {"command": "release-audit", "types": True, "nested": True},
     "smoke": {"command": "smoke", "types": True, "nested": False},
+    "detect": {"command": "detect", "types": True, "nested": False},
+    "compatibility": {"command": "compatibility", "types": True, "nested": False},
+    "fallout2_dump": {"command": "dump", "types": True, "nested": False},
+    "fallout2_fields": {"command": "fields", "types": True, "nested": False},
+    "fallout2_inventory": {"command": "inventory", "types": True, "nested": False},
     "save_diff": {"command": "diff", "types": True, "nested": True},
     "fixture_doctor": {"command": "fixture-doctor", "types": True, "nested": True},
     "fixture_coverage": {"command": "fixture-coverage", "types": True, "nested": True},
@@ -74,6 +81,33 @@ def _contract_coverage_details(contracts: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _fallout2_contract_details(contracts: dict[str, Any]) -> dict[str, Any]:
+    required = ["detect", "compatibility", "fallout2_dump", "fallout2_fields", "fallout2_inventory"]
+    return {
+        "required_contracts": required,
+        "missing_contracts": [contract_id for contract_id in required if contract_id not in contracts],
+        "typed_contracts": [contract_id for contract_id in required if expected_payload_types(contract_id)],
+    }
+
+
+def _fallout2_fixture_details() -> dict[str, Any]:
+    declared = [category for category in CATEGORY_TARGETS if category.startswith("fallout2.")]
+    required = [
+        "fallout2.baseline",
+        "fallout2.inventory",
+        "fallout2.perks",
+        "fallout2.status_effects",
+        "fallout2.late_game",
+        "fallout2.negative",
+    ]
+    return {
+        "declared_categories": declared,
+        "required_categories": required,
+        "missing_declared_categories": [category for category in required if category not in declared],
+        "real_save_policy": "No real Fallout 2 saves are required or committed by this audit; curated fixtures must be imported explicitly.",
+    }
+
+
 def run_release_audit() -> dict[str, Any]:
     checks: list[AuditCheck] = []
     commands = set(PUBLIC_COMMANDS)
@@ -95,6 +129,15 @@ def run_release_audit() -> dict[str, Any]:
     coverage = _contract_coverage_details(contracts)
     coverage_fail = bool(coverage["missing_contracts"] or coverage["missing_type_contracts"] or coverage["missing_nested_contracts"])
     checks.append(AuditCheck("json.contract_coverage", _status(has_fail=coverage_fail), "Expected JSON contracts have top-level type coverage and required nested samples.", coverage))
+    f2_contracts = _fallout2_contract_details(contracts)
+    checks.append(AuditCheck("json.contract_coverage.fallout2", _status(has_fail=bool(f2_contracts["missing_contracts"])), "Fallout 2 public JSON payloads are covered by explicit contracts.", f2_contracts))
+    matrix = compatibility_payload()
+    f2_matrix = matrix["games"]["fallout2"]
+    write_statuses = {name: f2_matrix[name]["status"] for name in ("set", "patch", "preset", "raw-write")}
+    unsafe_write_enabled = any(status == "supported" for status in write_statuses.values())
+    checks.append(AuditCheck("compatibility.fallout2", _status(has_fail=unsafe_write_enabled), "Fallout 2 compatibility matrix keeps write support disabled or unsafe/read-only.", {"write_statuses": write_statuses, "detect_status": f2_matrix["detect"]["status"], "inventory_status": f2_matrix["inventory"]["status"]}))
+    f2_fixtures = _fallout2_fixture_details()
+    checks.append(AuditCheck("fixtures.fallout2", _status(has_warn=bool(f2_fixtures["missing_declared_categories"])), "Fallout 2 fixture categories are declared; real save fixtures remain opt-in.", f2_fixtures))
     result = "FAIL" if any(check.status == "FAIL" for check in checks) else "WARN" if any(check.status == "WARN" for check in checks) else "OK"
     return {"status": result, "checks": [check.to_dict() for check in checks], "summary": {"ok": sum(1 for check in checks if check.status == "OK"), "warn": sum(1 for check in checks if check.status == "WARN"), "fail": sum(1 for check in checks if check.status == "FAIL")}, "read_only": True}
 
