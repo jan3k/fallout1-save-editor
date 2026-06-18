@@ -4,7 +4,7 @@ import argparse
 import json
 from collections.abc import Callable
 
-from f1se.project.backup_restore import list_backups, restore_backup, restore_preview
+from f1se.project.backup_restore import create_slot_backup, list_backups, restore_backup, restore_preview
 from f1se.project.fixture_doctor import fixture_doctor
 from f1se.project.save_diff import diff_slots
 from f1se.project.smoke import smoke_payload
@@ -26,6 +26,19 @@ def cmd_fixture_doctor(argv: list[str]) -> int:
     payload = fixture_doctor(args.fixture_root)
     _print_payload(payload, args.json)
     return 0 if payload.get("ok") else 1
+
+
+def cmd_backup(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="f1se backup")
+    parser.add_argument("slot")
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args(argv)
+    payload = create_slot_backup(args.slot)
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(payload["path"])
+    return 0
 
 
 def cmd_backups(argv: list[str]) -> int:
@@ -80,6 +93,7 @@ def cmd_smoke(argv: list[str]) -> int:
 
 COMMAND_HANDLERS: dict[str, CommandHandler] = {
     "fixture-doctor": cmd_fixture_doctor,
+    "backup": cmd_backup,
     "backups": cmd_backups,
     "restore-preview": cmd_restore_preview,
     "restore": cmd_restore,
