@@ -17,14 +17,14 @@ f1se compatibility --json
 | `fields` | supported | read_only |
 | `get` | supported | read_only |
 | `inventory` | supported | read_only |
-| `artifacts` | supported | not_supported |
+| `artifacts` | supported | partial |
 | `map-summary` | supported | not_supported |
 | `set` | supported | not_supported |
 | `patch` | supported | not_supported |
 | `preset` | supported | not_supported |
 | `raw-read` | supported | partial |
 | `raw-write` | unsafe | unsafe |
-| `gui` | supported | partial |
+| `gui` | supported | read_only |
 
 ## Fallout 2 command examples
 
@@ -35,7 +35,26 @@ f1se dump SLOT01 --game auto --json
 f1se fields SLOT01 --game fallout2 --json
 f1se get SLOT01 pc.level --game fallout2
 f1se inventory SLOT01 --game fallout2 --json
+f1se gui SLOT01
 ```
+
+## GUI behavior
+
+The Tkinter GUI can open Fallout 2 saves through `app_v11` in read-only mode. It shows:
+
+- overview;
+- player fields;
+- S.P.E.C.I.A.L.;
+- skills;
+- traits;
+- inventory;
+- perks;
+- kill counters;
+- field schema with confidence;
+- warnings;
+- compatibility matrix.
+
+Fallout 2 write controls are disabled. Raw read remains available for diagnostics, but raw write is blocked.
 
 ## Write policy
 
