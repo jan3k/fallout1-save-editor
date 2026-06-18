@@ -44,7 +44,7 @@ def compatibility_payload() -> dict[str, Any]:
         "preset": _capability("supported", "Existing Fallout 1 presets are preserved."),
         "raw-read": _capability("supported", "Existing read-only raw access remains available."),
         "raw-write": _capability("unsafe", "Experimental raw-write remains explicitly gated by --experimental and --write."),
-        "gui": _capability("supported", "Existing Tkinter GUI behavior is not changed by the Fallout 2 foundation."),
+        "gui": _capability("supported", "Existing Tkinter GUI behavior remains available for Fallout 1 editing."),
     }
     f2 = {
         "detect": _capability("supported", "Fallout 2 structural detection is available for SLOT directories and direct SAVE.DAT paths."),
@@ -52,14 +52,14 @@ def compatibility_payload() -> dict[str, Any]:
         "fields": _capability("read_only", "Fallout 2 field schema is read-only and includes offset, size, endian, risk and confidence metadata."),
         "get": _capability("read_only", "Fallout 2 fixed fields can be read by name; writes remain disabled."),
         "inventory": _capability("read_only", "Fallout 2 inventory lists existing objects only; add/remove/create operations are blocked."),
-        "artifacts": _capability("not_supported", "Fallout 2 slot artifact semantics are not yet separated from Fallout 1 artifact parsing."),
+        "artifacts": _capability("partial", "Fallout 2 GUI lists SAVE.DAT sections, but non-SAVE.DAT artifact semantics still need curated fixtures."),
         "map-summary": _capability("not_supported", "Fallout 2 map artifact summary requires curated fixtures before public support."),
         "set": _capability("not_supported", "Fallout 2 write support is disabled until high-confidence fields are fixture-proven.", ("fallout2.baseline",)),
         "patch": _capability("not_supported", "Fallout 2 patch support is disabled until write fixtures exist.", ("fallout2.baseline",)),
         "preset": _capability("not_supported", "Fallout 2 presets would imply writes and are intentionally absent."),
-        "raw-read": _capability("partial", "Use existing raw-read only with explicit user-supplied offsets; no Fallout 2 semantic raw command exists yet."),
-        "raw-write": _capability("unsafe", "Fallout 2 raw-write is not a supported compatibility surface."),
-        "gui": _capability("partial", "GUI write controls remain Fallout 1 only; Fallout 2 read-only GUI integration is a later phase."),
+        "raw-read": _capability("partial", "Raw read is available for diagnostics; semantic Fallout 2 raw surfaces remain limited."),
+        "raw-write": _capability("unsafe", "Fallout 2 raw-write is explicitly blocked in CLI/GUI compatibility policy."),
+        "gui": _capability("read_only", "GUI can open Fallout 2 saves with overview, fields, inventory, warnings and compatibility tabs; write controls are disabled."),
     }
     return {
         "read_only": True,
