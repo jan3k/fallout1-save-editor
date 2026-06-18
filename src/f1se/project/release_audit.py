@@ -17,6 +17,7 @@ EXPECTED_CONTRACT_COVERAGE: dict[str, dict[str, bool | str]] = {
     "smoke": {"command": "smoke", "types": True, "nested": False},
     "detect": {"command": "detect", "types": True, "nested": False},
     "compatibility": {"command": "compatibility", "types": True, "nested": False},
+    "character_summary": {"command": "character-summary", "types": True, "nested": False},
     "fallout2_dump": {"command": "dump", "types": True, "nested": False},
     "fallout2_fields": {"command": "fields", "types": True, "nested": False},
     "fallout2_inventory": {"command": "inventory", "types": True, "nested": False},
@@ -81,6 +82,15 @@ def _contract_coverage_details(contracts: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _fallout1_contract_details(contracts: dict[str, Any]) -> dict[str, Any]:
+    required = ["character_summary", "detect", "compatibility", "inventory_editable", "map_summary", "save_diff"]
+    return {
+        "required_contracts": required,
+        "missing_contracts": [contract_id for contract_id in required if contract_id not in contracts],
+        "typed_contracts": [contract_id for contract_id in required if expected_payload_types(contract_id)],
+    }
+
+
 def _fallout2_contract_details(contracts: dict[str, Any]) -> dict[str, Any]:
     required = ["detect", "compatibility", "fallout2_dump", "fallout2_fields", "fallout2_inventory"]
     return {
@@ -129,9 +139,13 @@ def run_release_audit() -> dict[str, Any]:
     coverage = _contract_coverage_details(contracts)
     coverage_fail = bool(coverage["missing_contracts"] or coverage["missing_type_contracts"] or coverage["missing_nested_contracts"])
     checks.append(AuditCheck("json.contract_coverage", _status(has_fail=coverage_fail), "Expected JSON contracts have top-level type coverage and required nested samples.", coverage))
+    f1_contracts = _fallout1_contract_details(contracts)
+    checks.append(AuditCheck("json.contract_coverage.fallout1", _status(has_fail=bool(f1_contracts["missing_contracts"])), "Fallout 1 public JSON payloads are covered by explicit contracts.", f1_contracts))
     f2_contracts = _fallout2_contract_details(contracts)
     checks.append(AuditCheck("json.contract_coverage.fallout2", _status(has_fail=bool(f2_contracts["missing_contracts"])), "Fallout 2 public JSON payloads are covered by explicit contracts.", f2_contracts))
     matrix = compatibility_payload()
+    f1_matrix = matrix["games"]["fallout1"]
+    checks.append(AuditCheck("compatibility.fallout1", _status(has_fail=f1_matrix["character-summary"]["status"] != "read_only"), "Fallout 1 compatibility matrix includes character-summary as read-only.", {"character_summary_status": f1_matrix["character-summary"]["status"]}))
     f2_matrix = matrix["games"]["fallout2"]
     write_statuses = {name: f2_matrix[name]["status"] for name in ("set", "patch", "preset", "raw-write")}
     unsafe_write_enabled = any(status == "supported" for status in write_statuses.values())
