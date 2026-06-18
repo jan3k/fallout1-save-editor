@@ -18,6 +18,7 @@ EXPECTED_CONTRACT_COVERAGE: dict[str, dict[str, bool | str]] = {
     "detect": {"command": "detect", "types": True, "nested": False},
     "compatibility": {"command": "compatibility", "types": True, "nested": False},
     "character_summary": {"command": "character-summary", "types": True, "nested": False},
+    "progression": {"command": "progression", "types": True, "nested": False},
     "fallout2_dump": {"command": "dump", "types": True, "nested": False},
     "fallout2_fields": {"command": "fields", "types": True, "nested": False},
     "fallout2_inventory": {"command": "inventory", "types": True, "nested": False},
@@ -83,7 +84,7 @@ def _contract_coverage_details(contracts: dict[str, Any]) -> dict[str, Any]:
 
 
 def _fallout1_contract_details(contracts: dict[str, Any]) -> dict[str, Any]:
-    required = ["character_summary", "detect", "compatibility", "inventory_editable", "map_summary", "save_diff"]
+    required = ["character_summary", "progression", "detect", "compatibility", "inventory_editable", "map_summary", "save_diff"]
     return {
         "required_contracts": required,
         "missing_contracts": [contract_id for contract_id in required if contract_id not in contracts],
@@ -145,7 +146,9 @@ def run_release_audit() -> dict[str, Any]:
     checks.append(AuditCheck("json.contract_coverage.fallout2", _status(has_fail=bool(f2_contracts["missing_contracts"])), "Fallout 2 public JSON payloads are covered by explicit contracts.", f2_contracts))
     matrix = compatibility_payload()
     f1_matrix = matrix["games"]["fallout1"]
-    checks.append(AuditCheck("compatibility.fallout1", _status(has_fail=f1_matrix["character-summary"]["status"] != "read_only"), "Fallout 1 compatibility matrix includes character-summary as read-only.", {"character_summary_status": f1_matrix["character-summary"]["status"]}))
+    f1_required_read_only = {"character-summary": "read_only", "progression": "read_only"}
+    f1_statuses = {name: f1_matrix[name]["status"] for name in f1_required_read_only}
+    checks.append(AuditCheck("compatibility.fallout1", _status(has_fail=any(f1_statuses[name] != expected for name, expected in f1_required_read_only.items())), "Fallout 1 compatibility matrix includes read-only aggregate commands.", {"required_statuses": f1_required_read_only, "actual_statuses": f1_statuses}))
     f2_matrix = matrix["games"]["fallout2"]
     write_statuses = {name: f2_matrix[name]["status"] for name in ("set", "patch", "preset", "raw-write")}
     unsafe_write_enabled = any(status == "supported" for status in write_statuses.values())
