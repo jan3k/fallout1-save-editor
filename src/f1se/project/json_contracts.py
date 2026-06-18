@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from f1se.project.json_nested_contracts import expected_nested_payload_types, validate_nested_payload_types
+
 
 @dataclass(frozen=True, slots=True)
 class JsonPayloadContract:
@@ -22,6 +24,7 @@ class JsonPayloadContract:
             "read_only": self.read_only,
             "notes": self.notes,
             "field_types": expected_payload_types(self.id),
+            "nested_field_types": expected_nested_payload_types(self.id),
         }
 
 
