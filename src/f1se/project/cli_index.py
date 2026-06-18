@@ -59,6 +59,7 @@ JSON_COMMANDS = {
     "fixture-import",
     "fixture-snapshot",
     "fixture-check",
+    "backup",
     "effective",
 }
 
