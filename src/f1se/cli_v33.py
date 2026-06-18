@@ -8,13 +8,23 @@ from pathlib import Path
 from f1se.cli_v32 import main as previous_main
 from f1se.project.character_summary import character_summary
 from f1se.project.game_detection import detect_game
-from f1se.project.game_profile import GameKind
 
 GAME_CHOICES = ("fallout1", "fallout2", "auto")
 
 
 def _json(payload: dict) -> None:
     print(json.dumps(payload, indent=2, sort_keys=True))
+
+
+def _unsupported_payload(slot: str, reason: str) -> dict:
+    detection = detect_game(slot)
+    return {
+        "game_kind": detection.game_kind.value,
+        "read_only": True,
+        "supported": False,
+        "reason": reason,
+        "detection": detection.to_dict(),
+    }
 
 
 def _cmd_character_summary(argv: list[str]) -> int:
@@ -25,24 +35,25 @@ def _cmd_character_summary(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     if args.game == "fallout2":
-        print("character-summary is currently implemented for Fallout 1 only", file=sys.stderr)
+        reason = "character-summary is currently implemented for Fallout 1 only"
+        if args.json:
+            _json(_unsupported_payload(args.slot, reason))
+        else:
+            print(reason, file=sys.stderr)
         return 2
-    if args.game == "auto":
-        detection = detect_game(args.slot)
-        if detection.game_kind is not GameKind.FALLOUT1:
-            if args.json:
-                _json({
-                    "game_kind": detection.game_kind.value,
-                    "read_only": True,
-                    "supported": False,
-                    "reason": "character-summary is currently implemented for Fallout 1 only",
-                    "detection": detection.to_dict(),
-                })
-            else:
-                print("character-summary is currently implemented for Fallout 1 only", file=sys.stderr)
-            return 2
 
-    payload = character_summary(args.slot)
+    try:
+        payload = character_summary(args.slot)
+    except Exception as exc:
+        if args.game == "auto":
+            reason = f"character-summary could not parse this slot as Fallout 1: {exc}"
+            if args.json:
+                _json(_unsupported_payload(args.slot, reason))
+            else:
+                print(reason, file=sys.stderr)
+            return 2
+        raise
+
     if args.json:
         _json(payload)
         return 0
