@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from f1se.cli_v33 import main
+from f1se.cli_v34 import main
 
 if __name__ == "__main__":
     raise SystemExit(main())
