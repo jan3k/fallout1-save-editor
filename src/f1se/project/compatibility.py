@@ -8,6 +8,7 @@ from f1se.project.game_profile import GameKind, get_profile
 COMMANDS = (
     "detect",
     "dump",
+    "character-summary",
     "fields",
     "get",
     "inventory",
@@ -34,6 +35,7 @@ def compatibility_payload() -> dict[str, Any]:
     f1 = {
         "detect": _capability("supported", "Fallout 1 SAVE.DAT parsing remains the default profile."),
         "dump": _capability("supported", "Existing Fallout 1 dump payload is preserved."),
+        "character-summary": _capability("read_only", "Fallout 1 character summary aggregates identity, progression, SPECIAL, skills, traits, perks, kills, inventory and warnings without mutation."),
         "fields": _capability("supported", "Existing Fallout 1 field registry is preserved."),
         "get": _capability("supported", "Existing Fallout 1 field lookup is preserved."),
         "inventory": _capability("supported", "Existing Fallout 1 inventory listing is preserved."),
@@ -49,6 +51,7 @@ def compatibility_payload() -> dict[str, Any]:
     f2 = {
         "detect": _capability("supported", "Fallout 2 structural detection is available for SLOT directories and direct SAVE.DAT paths."),
         "dump": _capability("read_only", "Fallout 2 dump exposes header, metadata, sections, fields and warnings without mutation."),
+        "character-summary": _capability("not_supported", "Character summary is currently a Fallout 1-focused aggregate view."),
         "fields": _capability("read_only", "Fallout 2 field schema is read-only and includes offset, size, endian, risk and confidence metadata."),
         "get": _capability("read_only", "Fallout 2 fixed fields can be read by name; writes remain disabled."),
         "inventory": _capability("read_only", "Fallout 2 inventory lists existing objects only; add/remove/create operations are blocked."),
