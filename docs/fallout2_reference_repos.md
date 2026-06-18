@@ -49,6 +49,10 @@ The target project remains MIT. Fallout 2 support starts as detection and read-o
 - **Important safety precedent:** does not treat new inventory-object creation as a trivial operation; object-graph editing remains constrained.
 - **Use in this project:** architectural inspiration and test-surface inspiration. No source was copied.
 
+## Verification status
+
+The repository contents above were reviewed during the planning phase through GitHub/web research. This branch records the format observations in documentation and reimplements the behavior in original Python code. If a later PR imports any concrete table or code, it must update `docs/third_party_notes.md` with exact source path, commit and license compatibility.
+
 ## Licensing policy applied
 
 - GPL-3.0 code from `efossvold/fallout2-save-editor` is not copied.
