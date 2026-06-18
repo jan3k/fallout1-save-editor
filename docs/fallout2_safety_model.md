@@ -11,6 +11,7 @@ Fallout 2 support is read-only by default and, in the current branch, read-only 
 - Fallout 2 inventory exposes existing objects only.
 - New PID/object creation is forbidden.
 - World-state, quest-state, map-object and arbitrary-section rewrites are forbidden.
+- GUI opens Fallout 2 saves through a read-only session adapter and disables write/raw-write controls.
 
 ## Confidence model
 
@@ -27,6 +28,10 @@ Confidence does not imply writability.
 - `SAFE`: read-only field with plausible direct semantic meaning.
 - `ADVANCED`: read-only field whose interpretation may have hidden engine or derived-state effects.
 - `RAW`: read-only structural value that must not be mutated through a semantic command.
+
+## GUI safety
+
+`f1se gui SLOT` can open Fallout 2 saves in read-only mode. The GUI shows overview, field schema, inventory, warnings and compatibility state. It does not route Fallout 2 data through the Fallout 1 write model.
 
 ## Future write gate
 
