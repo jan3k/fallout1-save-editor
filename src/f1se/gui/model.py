@@ -16,11 +16,15 @@ from f1se.format.slot import ARTIFACT_MAP_SAV, SaveSlot
 from f1se.format.save_dat import SaveDat
 from f1se.io.atomic_write import atomic_write_bytes
 from f1se.io.backup import backup_slot
+from f1se.project.backup_restore import list_backups, restore_preview
 from f1se.project.cli_index import commands_payload as project_commands_payload
 from f1se.project.features import feature_matrix_payload as project_feature_matrix_payload
+from f1se.project.fixture_doctor import fixture_doctor
 from f1se.project.global_labels import global_labels_payload as project_global_labels_payload, labels_by_block
 from f1se.project.inventory_workflow import build_inventory_quantity_patch, inventory_workflow_payload
 from f1se.project.map_summary import summarize_map
+from f1se.project.save_diff import diff_slots
+from f1se.project.smoke import smoke_payload as project_smoke_payload
 from f1se.schema.fields import Diff, Field
 
 
@@ -149,6 +153,21 @@ class SaveEditorSession:
 
     def cli_commands_payload(self) -> dict[str, Any]:
         return project_commands_payload()
+
+    def backup_catalog_payload(self) -> dict[str, Any]:
+        return list_backups(self.slot_path)
+
+    def restore_preview_payload(self, backup_name: str) -> dict[str, Any]:
+        return restore_preview(self.slot_path, backup_name)
+
+    def slot_diff_payload(self, other_slot_path: str | Path) -> dict[str, Any]:
+        return diff_slots(self.slot_path, other_slot_path)
+
+    def smoke_payload(self) -> dict[str, Any]:
+        return project_smoke_payload()
+
+    def fixture_doctor_payload(self, fixture_root: str | Path) -> dict[str, Any]:
+        return fixture_doctor(fixture_root)
 
     def feature_matrix_payload(self) -> dict[str, Any]:
         return project_feature_matrix_payload()
