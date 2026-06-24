@@ -80,7 +80,7 @@ def compatibility_payload() -> dict[str, Any]:
         "preset": _capability("not_supported", "Presets are not available."),
         "raw-read": _capability("partial", "Diagnostic read access remains limited."),
         "raw-write": _capability("unsafe", "Not part of the Fallout 2 semantic surface."),
-        "gui": _capability("read_only", "GUI Fallout 2 view remains inspection-only."),
+        "gui": _capability("partial", "GUI can edit the accepted Fallout 2 semantic field subset; raw write and inventory creation remain blocked."),
     }
     return {
         "read_only": False,
