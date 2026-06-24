@@ -1,0 +1,66 @@
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+
+# Coverage / test output
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.junit_cache/
+
+# Packaging / build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Virtual environments / local env files
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.*
+!.env.example
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local runtime logs
+*.log
+logs/
+
+# f1se local backups
+.f1se-backups/
+**/.f1se-backups/
+
+# Local Fallout save copies at repository root
+# Test fixtures under tests/fixtures are intentionally not ignored.
+/SLOT*/
+/SAVE.DAT
+/*.SAV
+/*.sav
+/*.BAK
+/*.bak
+/*.orig
+
+# Temporary scratch files
+tmp/
+temp/
+*.tmp
