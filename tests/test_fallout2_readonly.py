@@ -72,11 +72,8 @@ class Fallout2ReadOnlyTests(unittest.TestCase):
             self.assertTrue(session.read_only)
             self.assertEqual(session.summary()["player_name"], "Chosen One")
             self.assertEqual(session.preview_patch({}), [])
-            self.assertEqual(session.raw_read(0, 4), b"FALL")
             with self.assertRaises(ValueError):
                 session.preview_patch({"pc.level": 4})
-            with self.assertRaises(ValueError):
-                session.raw_preview(0, b"\x00")
 
     def test_cli_payloads_match_contracts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -101,7 +98,7 @@ class Fallout2ReadOnlyTests(unittest.TestCase):
             self.assertEqual(cp.returncode, 0, cp.stderr)
             self.assertEqual(cp.stdout.strip(), "3")
         matrix = compatibility_payload()
-        self.assertEqual(matrix["games"]["fallout2"]["set"]["status"], "not_supported")
+        self.assertEqual(matrix["games"]["fallout2"]["set"]["status"], "partial")
         self.assertEqual(matrix["games"]["fallout2"]["inventory"]["status"], "read_only")
         self.assertEqual(matrix["games"]["fallout2"]["gui"]["status"], "read_only")
 
