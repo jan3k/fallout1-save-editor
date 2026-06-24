@@ -128,6 +128,4 @@ def set_skill(slot_path: str | Path, skill_name: str, value: int, *, game: str =
     detected = detect_game(slot_path).game_kind
     if detected is GameKind.FALLOUT2:
         return _set_fallout2(slot_path, skill, value, write=write, allow_out_of_range=allow_out_of_range)
-    if detected is GameKind.FALLOUT1:
-        return _set_fallout1(slot_path, skill, value, write=write, allow_out_of_range=allow_out_of_range)
-    raise ValueError("could not detect Fallout 1 or Fallout 2 save slot")
+    return _set_fallout1(slot_path, skill, value, write=write, allow_out_of_range=allow_out_of_range)
