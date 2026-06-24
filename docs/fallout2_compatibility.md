@@ -1,6 +1,6 @@
 # Fallout 2 compatibility
 
-Fallout 2 support is intentionally introduced as a read-only compatibility layer.
+Fallout 2 support includes read-only inspection plus a limited semantic `set` path for an accepted subset of existing integer fields.
 
 Run:
 
@@ -17,9 +17,10 @@ f1se compatibility --json
 | `fields` | supported | read_only |
 | `get` | supported | read_only |
 | `inventory` | supported | read_only |
+| `fallout2-writable-fields` | not_supported | read_only |
 | `artifacts` | supported | partial |
 | `map-summary` | supported | not_supported |
-| `set` | supported | not_supported |
+| `set` | supported | partial |
 | `patch` | supported | not_supported |
 | `preset` | supported | not_supported |
 | `raw-read` | supported | partial |
@@ -35,27 +36,26 @@ f1se dump SLOT01 --game auto --json
 f1se fields SLOT01 --game fallout2 --json
 f1se get SLOT01 pc.level --game fallout2
 f1se inventory SLOT01 --game fallout2 --json
+f1se fallout2-writable-fields SLOT01 --json
+f1se set SLOT01 player.current_hp 45 --game fallout2
+f1se set SLOT01 player.current_hp 45 --game fallout2 --write
 f1se gui SLOT01
 ```
 
 ## GUI behavior
 
-The Tkinter GUI can open Fallout 2 saves through `app_v11` in read-only mode. It shows:
+The Tkinter GUI can open Fallout 2 saves through `app_v11` in read-only mode. It shows overview, player fields, S.P.E.C.I.A.L., skills, traits, inventory, perks, kill counters, field schema, warnings and compatibility state.
 
-- overview;
-- player fields;
-- S.P.E.C.I.A.L.;
-- skills;
-- traits;
-- inventory;
-- perks;
-- kill counters;
-- field schema with confidence;
-- warnings;
-- compatibility matrix.
+GUI editing for Fallout 2 remains disabled.
 
-Fallout 2 write controls are disabled. Raw read remains available for diagnostics, but raw write is blocked.
+## Set policy
 
-## Write policy
+Fallout 2 `set` is intentionally limited:
 
-Fallout 2 writes are disabled in this phase. The compatibility matrix must not report `supported` for Fallout 2 `set`, `patch`, `preset` or semantic inventory writes until curated fixtures prove the exact offsets and invariants.
+- dry-run is the default;
+- `--write` is required to modify `SAVE.DAT`;
+- a `.f1se-backups/` slot backup is created before a real modification;
+- only accepted semantic integer fields are supported;
+- batch patching, presets, item creation, item deletion and arbitrary raw offsets remain unsupported.
+
+Use `f1se fallout2-writable-fields SLOT01 --json` to inspect the currently accepted field subset.
